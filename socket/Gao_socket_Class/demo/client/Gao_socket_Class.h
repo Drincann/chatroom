@@ -2,135 +2,130 @@
 #ifndef GAO_LIHAI_sock_api
 #define GAO_LIHAI_sock_api
 
-#include<winsock2.h>
-#include<string.h>
+#include <string.h>
+#include <winsock2.h>
 
-#define NORMAL_CLOSE 1//µ÷ÓÃÕßÊÖ¶¯Õı³£½áÊø
-//server client_leave_callback »Øµ÷º¯ÊıµÄµÚËÄ¸ö²ÎÊı³£Á¿
-#define CLIENT_NOR_CLOSE -4//¿Í»§Õı³£ÍË³ö
-#define CLIENT_UNNOR_CLOSE -5//¿Í»§·ÇÕı³£ÍË³ö
-//server client_coming_callback »Øµ÷º¯ÊıµÄ·µ»Ø³£Á¿
-#define ACCEPT_CLIENT 1//·şÎñÆ÷½ÓÊÜ¿Í»§
-#define REFUSE_CLIENT -1//·şÎñÆ÷ºöÂÔ¿Í»§
-//server º¯ÊıµÄ·µ»Ø³£Á¿
-#define ERROR_SER_MEM_1 -1//¿ªÊ¼Ê±ÄÚ´æ·ÖÅäÊ§°Ü
-#define ERROR_SER_SOCK -2//»ñÈ¡ socket Ê§°Ü
-#define ERROR_SER_BIND -3//bind port Ê§°Ü
-#define ERROR_SER_LISTEN -4//listen Ê§°Ü
-#define ERROR_SER_MEM_2 -5//¿Í»§½øÈëÊ±ÄÚ´æ·ÖÅäÊ§°Ü
-#define ERROR_SER_NOR_CLOSE -6//¿Í»§Õı³£ÍË³öÊ±ÄÚ´æ·ÖÅäÊ§°Ü
-#define ERROR_SER_UNNOR_CLOSE -7//¿Í»§·ÇÕı³£ÍË³öÊ±ÄÚ´æ·ÖÅäÊ§°Ü
+#define NORMAL_CLOSE 1  //è°ƒç”¨è€…æ‰‹åŠ¨æ­£å¸¸ç»“æŸ
+// server client_leave_callback å›è°ƒå‡½æ•°çš„ç¬¬å››ä¸ªå‚æ•°å¸¸é‡
+#define CLIENT_NOR_CLOSE -4    //å®¢æˆ·æ­£å¸¸é€€å‡º
+#define CLIENT_UNNOR_CLOSE -5  //å®¢æˆ·éæ­£å¸¸é€€å‡º
+// server client_coming_callback å›è°ƒå‡½æ•°çš„è¿”å›å¸¸é‡
+#define ACCEPT_CLIENT 1   //æœåŠ¡å™¨æ¥å—å®¢æˆ·
+#define REFUSE_CLIENT -1  //æœåŠ¡å™¨å¿½ç•¥å®¢æˆ·
+// server å‡½æ•°çš„è¿”å›å¸¸é‡
+#define ERROR_SER_MEM_1 -1        //å¼€å§‹æ—¶å†…å­˜åˆ†é…å¤±è´¥
+#define ERROR_SER_SOCK -2         //è·å– socket å¤±è´¥
+#define ERROR_SER_BIND -3         // bind port å¤±è´¥
+#define ERROR_SER_LISTEN -4       // listen å¤±è´¥
+#define ERROR_SER_MEM_2 -5        //å®¢æˆ·è¿›å…¥æ—¶å†…å­˜åˆ†é…å¤±è´¥
+#define ERROR_SER_NOR_CLOSE -6    //å®¢æˆ·æ­£å¸¸é€€å‡ºæ—¶å†…å­˜åˆ†é…å¤±è´¥
+#define ERROR_SER_UNNOR_CLOSE -7  //å®¢æˆ·éæ­£å¸¸é€€å‡ºæ—¶å†…å­˜åˆ†é…å¤±è´¥
 
-//client º¯ÊıµÄ·µ»Ø³£Á¿
-#define ERROR_CLI_SOCK -1//»ñÈ¡ socket Ê§°Ü
-#define ERROR_CLI_CNCT -2//connect Ê§°Ü
-#define ERROR_CLI_SERVERCLOSE_1 -3//·şÎñ¶ËÕı³£¹Ø±ÕÁ¬½Ó
-#define ERROR_CLI_SERVERCLOSE_2 -4//·şÎñ¶ËÒì³£ÍË³ö
+// client å‡½æ•°çš„è¿”å›å¸¸é‡
+#define ERROR_CLI_SOCK -1           //è·å– socket å¤±è´¥
+#define ERROR_CLI_CNCT -2           // connect å¤±è´¥
+#define ERROR_CLI_SERVERCLOSE_1 -3  //æœåŠ¡ç«¯æ­£å¸¸å…³é—­è¿æ¥
+#define ERROR_CLI_SERVERCLOSE_2 -4  //æœåŠ¡ç«¯å¼‚å¸¸é€€å‡º
 
-//socket + address ½á¹¹Ìå
+// socket + address ç»“æ„ä½“
 typedef struct socket_state {
-	SOCKET socket;
-	SOCKADDR_IN socket_addr;
-}Client_state, Server_state;
+  SOCKET socket;
+  SOCKADDR_IN socket_addr;
+} Client_state, Server_state;
 
-//¶¨ÒåÀàÊ±ÖĞĞèÒª×ÔÉí£¬ÌáÇ°define
+//å®šä¹‰ç±»æ—¶ä¸­éœ€è¦è‡ªèº«ï¼Œæå‰define
 typedef struct Server_ Server;
 typedef struct Client_ Client;
-//********************************************Àà¶¨Òå********************************************
+//********************************************ç±»å®šä¹‰********************************************
 
-
-//--------------------·şÎñ¶Ë Àà
+//--------------------æœåŠ¡ç«¯ ç±»
 struct Server_ {
+  // privateæˆå‘˜
+  Server_state private_1, *private_2;
+  char private_3;
+  int private_4;
 
-	//private³ÉÔ±
-	Server_state private_1, * private_2;
-	char private_3;
-	int private_4;
+  // publicæˆå‘˜
+  unsigned short member_port;  //ç«¯å£
+  struct timeval member_timeout;  // select è¶…æ—¶æ—¶é—´ï¼Œéœ€è¦æä¾›ä¸€ä¸ª timeval
+  int member_buf_lenth;           //æ¥æ”¶ç¼“å†²åŒºé•¿åº¦
+  int (*member_callback_client_coming)(SOCKET client_sock,
+                                       char* ip);  // client è¯·æ±‚è¿æ¥ å›è°ƒå‡½æ•°
+  void (*member_callback_client_leave)(SOCKET client_sock,
+                                       char* ip,
+                                       int state);  // client ç¦»å¼€ å›è°ƒå‡½æ•°
+  void (*member_callback_data_coming)(SOCKET client_sock,
+                                      char* ip,
+                                      char* data);  // client æ•°æ®åˆ°è¾¾ å›è°ƒå‡½æ•°
+  void (*member_callback_error)(SOCKET client_sock,
+                                int error);  //å¼‚å¸¸é”™è¯¯å›è°ƒå‡½æ•°ï¼Œä¾›ç¨‹åºå‘˜ debug
 
-	//public³ÉÔ±
-	unsigned short member_port;//¶Ë¿Ú
-	struct timeval member_timeout;//select ³¬Ê±Ê±¼ä£¬ĞèÒªÌá¹©Ò»¸ö timeval
-	int member_buf_lenth;//½ÓÊÕ»º³åÇø³¤¶È
-	int (*member_callback_client_coming)(SOCKET client_sock, char* ip);//client ÇëÇóÁ¬½Ó »Øµ÷º¯Êı
-	void (*member_callback_client_leave)(SOCKET client_sock, char* ip, int state);//client Àë¿ª »Øµ÷º¯Êı
-	void (*member_callback_data_coming)(SOCKET client_sock, char* ip, char* data);//client Êı¾İµ½´ï »Øµ÷º¯Êı
-	void (*member_callback_error)(SOCKET client_sock, int error);//Òì³£´íÎó»Øµ÷º¯Êı£¬¹©³ÌĞòÔ± debug
+  //æ–¹æ³•
+  int (*method_Create_serversock)(Server* Server_Class);  //åˆ›å»ºæœåŠ¡ç«¯
 
-	//·½·¨
-	int (*method_Create_serversock)(Server* Server_Class);//´´½¨·şÎñ¶Ë
+  int (*method_Send_msg)(Server Server_Class,
+                         SOCKET client_sock,
+                         char* msg,
+                         int lenth);  //å‘é€æ•°æ®
 
-	int (*method_Send_msg)(Server Server_Class, SOCKET client_sock, char* msg, int lenth);//·¢ËÍÊı¾İ
+  int (*method_Close_serversock)(Server Server_Class);  //å…³é—­æœåŠ¡ç«¯
 
-	int (*method_Close_serversock)(Server Server_Class);//¹Ø±Õ·şÎñ¶Ë
+  int (*method_Get_error_server)(Server Server_Class);  //è·å–é”™è¯¯ä¿¡æ¯
 
-	int (*method_Get_error_server)(Server Server_Class);//»ñÈ¡´íÎóĞÅÏ¢
-
-	SOCKET(*method_Get_serversock)(Server Server_Class);
+  SOCKET (*method_Get_serversock)(Server Server_Class);
 };
 
-
-//--------------------¿Í»§¶Ë Àà
+//--------------------å®¢æˆ·ç«¯ ç±»
 struct Client_ {
+  // privateæˆå‘˜
+  Client_state private_1, private_2;
+  char private_3;
+  int private_4;
 
-	//private³ÉÔ±
-	Client_state private_1, private_2;
-	char private_3;
-	int private_4;
+  // publicæˆå‘˜
+  unsigned short member_port;  // server ç«¯å£
+  char member_ip[16];          // server IP åœ°å€
+  struct timeval member_timeout;  // select è¶…æ—¶æ—¶é—´ï¼Œéœ€è¦æä¾›ä¸€ä¸ª timeval
+  int member_buf_lenth;           //æ¥æ”¶ç¼“å†²åŒºé•¿åº¦
+  void (*member_callback_server_leave)(SOCKET client_sock,
+                                       int error);  // server ç¦»å¼€ å›è°ƒå‡½æ•°
+  void (*member_callback_data_coming)(SOCKET client_sock,
+                                      char* data);  // server æ•°æ®åˆ°è¾¾ å›è°ƒå‡½æ•°
+  void (*member_callback_connect_succeed)(
+      SOCKET client_sock);                   // connect æˆåŠŸ å›è°ƒå‡½æ•°
+  void (*member_callback_error)(int error);  //å¼‚å¸¸é”™è¯¯å›è°ƒå‡½æ•°ï¼Œä¾›ç¨‹åºå‘˜ debug
 
-	//public³ÉÔ±
-	unsigned short member_port;//server ¶Ë¿Ú
-	char member_ip[16]; //server IP µØÖ·
-	struct timeval member_timeout; //select ³¬Ê±Ê±¼ä£¬ĞèÒªÌá¹©Ò»¸ö timeval
-	int member_buf_lenth;//½ÓÊÕ»º³åÇø³¤¶È
-	void (*member_callback_server_leave)(SOCKET client_sock, int error);//server Àë¿ª »Øµ÷º¯Êı
-	void (*member_callback_data_coming)(SOCKET client_sock, char* data);//server Êı¾İµ½´ï »Øµ÷º¯Êı
-	void (*member_callback_connect_succeed)(SOCKET client_sock); //connect ³É¹¦ »Øµ÷º¯Êı
-	void (*member_callback_error)(int error);//Òì³£´íÎó»Øµ÷º¯Êı£¬¹©³ÌĞòÔ± debug
+  //æ–¹æ³•
+  int (*method_Create_clientsock)(Client* Client_Class);
 
-	//·½·¨
-	int (*method_Create_clientsock)(Client* Client_Class);
+  int (*method_Send_msg)(Client Client_Class, char* msg, int lenth);
 
-	int (*method_Send_msg)(Client Client_Class, char* msg, int lenth);
+  int (*method_Close_clientsock)(Client Client_Class);
 
-	int (*method_Close_clientsock)(Client Client_Class);
+  int (*method_Get_error_client)(Client Client_Class);
 
-	int (*method_Get_error_client)(Client Client_Class);
-
-	SOCKET(*method_Get_clientsock)(Client Client_Class);
+  SOCKET (*method_Get_clientsock)(Client Client_Class);
 };
-//********************************************Àà¶¨Òå½áÊø********************************************
+//********************************************ç±»å®šä¹‰ç»“æŸ********************************************
 
+//********************************************ä»¥ä¸‹ç¬¬äºŒä¸ªå‡½æ•°å¿…é¡»åœ¨å¼€å¤´è°ƒç”¨********************************************
+//ä¸€ä¸ªè¿›ç¨‹è°ƒç”¨ä¸€æ¬¡å³å¯ï¼Œå¤šçº¿ç¨‹ä¸ç”¨é‡å¤è°ƒç”¨
 
-
-
-
-
-
-
-//********************************************ÒÔÏÂµÚ¶ş¸öº¯Êı±ØĞëÔÚ¿ªÍ·µ÷ÓÃ********************************************
-//Ò»¸ö½ø³Ìµ÷ÓÃÒ»´Î¼´¿É£¬¶àÏß³Ì²»ÓÃÖØ¸´µ÷ÓÃ
-
-//-----------°ó¶¨socket¿â£¨³õÊ¼»¯socket£©
+//-----------ç»‘å®šsocketåº“ï¼ˆåˆå§‹åŒ–socketï¼‰
 int Startup_sock_api();
 
-//-----------Çå³ı°ó¶¨
+//-----------æ¸…é™¤ç»‘å®š
 int Cleanup_sock_api();
 
-//*********************************************ÓÃÓÚ°ó¶¨ api µ½³ÌĞò**************************************************
+//*********************************************ç”¨äºç»‘å®š api
+//åˆ°ç¨‹åº**************************************************
 
-
-
-
-
-
-
-
-//*********************************************get¶ÔÏó**************************************************
-//get·şÎñ¶Ë¶ÔÏó
+//*********************************************getå¯¹è±¡**************************************************
+// getæœåŠ¡ç«¯å¯¹è±¡
 void Get_object_server(Server* Server_Class);
 
-//get¿Í»§¶Ë¶ÔÏó
+// getå®¢æˆ·ç«¯å¯¹è±¡
 void Get_object_client(Client* Client_Class);
-//*********************************************get¶ÔÏó**************************************************
+//*********************************************getå¯¹è±¡**************************************************
 
 #endif

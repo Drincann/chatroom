@@ -1,24 +1,29 @@
-#include<winsock2.h>
-#pragma comment(lib,"ws2_32.lib")//ÔÚVS2008ÒÔÉÏµÄ°æ±¾ÖĞ£¬Ê¹ÓÃsocketÊ±ĞèÒªÁ´½Ó¿â: Ws2_32.lib
-typedef struct Server_ Server;//¶¨ÒåÀàÊ±ÖĞĞèÒª×ÔÉí£¬ÌáÇ°define
-typedef struct Client_ Client;//¶¨ÒåÀàÊ±ÖĞĞèÒª×ÔÉí£¬ÌáÇ°define
+#include <winsock2.h>
+#pragma comment( \
+    lib,         \
+    "ws2_32.lib")  //åœ¨VS2008ä»¥ä¸Šçš„ç‰ˆæœ¬ä¸­ï¼Œä½¿ç”¨socketæ—¶éœ€è¦é“¾æ¥åº“: Ws2_32.lib
+typedef struct Server_ Server;  //å®šä¹‰ç±»æ—¶ä¸­éœ€è¦è‡ªèº«ï¼Œæå‰define
+typedef struct Client_ Client;  //å®šä¹‰ç±»æ—¶ä¸­éœ€è¦è‡ªèº«ï¼Œæå‰define
 
 WSADATA wsadata;
 
-//socket + address ½á¹¹Ìå
+// socket + address ç»“æ„ä½“
 typedef struct socket_state {
-	SOCKET socket;
-	SOCKADDR_IN socket_addr;
-}Client_state, Server_state;
+  SOCKET socket;
+  SOCKADDR_IN socket_addr;
+} Client_state, Server_state;
 
-//ËùÓĞº¯Êı
+//æ‰€æœ‰å‡½æ•°
 int Create_serversock(Server* Server_Class);
 
 int Create_clientsock(Client* Client_Class);
 
-int Send_msg_server(Server* Server_Class, SOCKET client_sock, char* msg, int lenth);
+int Send_msg_server(Server* Server_Class,
+                    SOCKET client_sock,
+                    char* msg,
+                    int lenth);
 
-int Send_msg_client(Client* Client_Class,  char* msg, int lenth);
+int Send_msg_client(Client* Client_Class, char* msg, int lenth);
 
 int Close_serversock(Server* Server_Class);
 
@@ -36,455 +41,487 @@ int Cleanup_sock_api();
 
 int Startup_sock_api();
 
-void delete_member(struct socket_state* (*arr), int number, int size);
+void delete_member(struct socket_state*(*arr), int number, int size);
 
 void Get_object_server(Server* Server_Class);
 
 void Get_object_client(Client* Client_Class);
 
-//********************************************Àà¶¨Òå********************************************
+//********************************************ç±»å®šä¹‰********************************************
 
-
-
-//--------------------·şÎñ¶Ë Àà
+//--------------------æœåŠ¡ç«¯ ç±»
 struct Server_ {
+  // privateæˆå‘˜
+  Server_state server, *s_client;  // seversock
+  char close_ser;                  //ç»“æŸå‡½æ•°æ ‡è®°
+  int error_sock;                  //é”™è¯¯ä¿¡æ¯
 
-	//private³ÉÔ±
-	Server_state server, * s_client;//seversock
-	char close_ser;//½áÊøº¯Êı±ê¼Ç
-	int error_sock;//´íÎóĞÅÏ¢
+  // publicæˆå‘˜
+  unsigned short port;     //ç«¯å£
+  struct timeval timeout;  // select è¶…æ—¶æ—¶é—´ï¼Œéœ€è¦æä¾›ä¸€ä¸ª timeval
+  int buf_lenth;           //æ¥æ”¶ç¼“å†²åŒºé•¿åº¦
+  int (*client_coming_callback)(SOCKET client_sock,
+                                char* ip);  // client è¯·æ±‚è¿æ¥ å›è°ƒå‡½æ•°
+  void (*client_leave_callback)(SOCKET client_sock,
+                                char* ip,
+                                int state);  // client ç¦»å¼€ å›è°ƒå‡½æ•°
+  void (*data_coming_callback)(SOCKET client_sock,
+                               char* ip,
+                               char* data);  // client æ•°æ®åˆ°è¾¾ å›è°ƒå‡½æ•°
+  void (*error_callback)(SOCKET client_sock,
+                         int error);  //å¼‚å¸¸é”™è¯¯å›è°ƒå‡½æ•°ï¼Œä¾›ç¨‹åºå‘˜ debug
 
-	//public³ÉÔ±
-	unsigned short port;//¶Ë¿Ú
-	struct timeval timeout;//select ³¬Ê±Ê±¼ä£¬ĞèÒªÌá¹©Ò»¸ö timeval
-	int buf_lenth;//½ÓÊÕ»º³åÇø³¤¶È
-	int (*client_coming_callback)(SOCKET client_sock, char* ip);//client ÇëÇóÁ¬½Ó »Øµ÷º¯Êı
-	void (*client_leave_callback)(SOCKET client_sock, char* ip, int state);//client Àë¿ª »Øµ÷º¯Êı
-	void (*data_coming_callback)(SOCKET client_sock, char* ip, char* data);//client Êı¾İµ½´ï »Øµ÷º¯Êı
-	void (*error_callback)(SOCKET client_sock, int error);//Òì³£´íÎó»Øµ÷º¯Êı£¬¹©³ÌĞòÔ± debug
+  //æ–¹æ³•
+  int (*Create_serversock)(Server* Server_Class);  //åˆ›å»ºæœåŠ¡ç«¯
 
-	//·½·¨
-	int (*Create_serversock)(Server* Server_Class);//´´½¨·şÎñ¶Ë
+  int (*Send_msg)(Server* Server_Class,
+                  SOCKET client_sock,
+                  char* msg,
+                  int lenth);  //å‘é€æ•°æ®
 
-	int (*Send_msg)(Server* Server_Class, SOCKET client_sock, char* msg, int lenth);//·¢ËÍÊı¾İ
+  int (*Close_serversock)(Server* Server_Class);  //å…³é—­æœåŠ¡ç«¯
 
-	int (*Close_serversock)(Server* Server_Class);//¹Ø±Õ·şÎñ¶Ë
+  int (*Get_error_server)(Server* Server_Class);  //è·å–é”™è¯¯ä¿¡æ¯
 
-	int (*Get_error_server)(Server* Server_Class);//»ñÈ¡´íÎóĞÅÏ¢
-
-	SOCKET (*Get_serversock)(Server* Server_Class);
+  SOCKET (*Get_serversock)(Server* Server_Class);
 };
 
-
-//--------------------¿Í»§¶Ë Àà
+//--------------------å®¢æˆ·ç«¯ ç±»
 struct Client_ {
+  // privateæˆå‘˜
+  Client_state client, c_server;  // clientsock
+  char close_cli;                 //ç»“æŸå‡½æ•°æ ‡è®°
+  int error_sock;                 //é”™è¯¯ä¿¡æ¯
 
-	//private³ÉÔ±
-	Client_state client, c_server;//clientsock
-	char close_cli;//½áÊøº¯Êı±ê¼Ç
-	int error_sock;//´íÎóĞÅÏ¢
+  // publicæˆå‘˜
+  unsigned short port;     // server ç«¯å£
+  char* ip;                // server IP åœ°å€
+  struct timeval timeout;  // select è¶…æ—¶æ—¶é—´ï¼Œéœ€è¦æä¾›ä¸€ä¸ª timeval
+  int buf_lenth;           //æ¥æ”¶ç¼“å†²åŒºé•¿åº¦
+  void (*server_leave_callback)(SOCKET client_sock,
+                                int error);  // server ç¦»å¼€ å›è°ƒå‡½æ•°
+  void (*data_coming_callback)(SOCKET client_sock,
+                               char* data);  // server æ•°æ®åˆ°è¾¾ å›è°ƒå‡½æ•°
+  void (*connect_succeed_callback)(SOCKET client_sock);  // connect æˆåŠŸ
+                                                         // å›è°ƒå‡½æ•°
+  void (*error_callback)(int error);  //å¼‚å¸¸é”™è¯¯å›è°ƒå‡½æ•°ï¼Œä¾›ç¨‹åºå‘˜ debug
 
-	//public³ÉÔ±
-	unsigned short port;//server ¶Ë¿Ú
-	char* ip; //server IP µØÖ·
-	struct timeval timeout; //select ³¬Ê±Ê±¼ä£¬ĞèÒªÌá¹©Ò»¸ö timeval
-	int buf_lenth;//½ÓÊÕ»º³åÇø³¤¶È
-	void (*server_leave_callback)(SOCKET client_sock, int error);//server Àë¿ª »Øµ÷º¯Êı
-	void (*data_coming_callback)(SOCKET client_sock, char* data);//server Êı¾İµ½´ï »Øµ÷º¯Êı
-	void (*connect_succeed_callback)(SOCKET client_sock); //connect ³É¹¦ »Øµ÷º¯Êı
-	void (*error_callback)(int error);//Òì³£´íÎó»Øµ÷º¯Êı£¬¹©³ÌĞòÔ± debug
+  //æ–¹æ³•
+  int (*Create_clientsock)(Client* Client_Class);
 
-	//·½·¨
-	int (*Create_clientsock)(Client* Client_Class);
+  int (*Send_msg)(Client* Client_Class, char* msg, int lenth);
 
-	int (*Send_msg)(Client* Client_Class, char* msg, int lenth);
+  int (*Close_clientsock)(Client* Client_Class);
 
-	int (*Close_clientsock)(Client* Client_Class);
+  int (*Get_error_client)(Client* Client_Class);
 
-	int (*Get_error_client)(Client* Client_Class);
-
-	SOCKET (*Get_clientsock)(Client* Client_Class);
+  SOCKET (*Get_clientsock)(Client* Client_Class);
 };
-//********************************************Àà¶¨Òå½áÊø********************************************
+//********************************************ç±»å®šä¹‰ç»“æŸ********************************************
 
-
-
-
-
-
-
-
-//********************************************ÒÔÏÂµÚ¶ş¸öº¯Êı±ØĞëÔÚ¿ªÍ·µ÷ÓÃ********************************************
-//Ò»¸ö½ø³Ìµ÷ÓÃÒ»´Î¼´¿É£¬¶àÏß³Ì²»ÓÃÖØ¸´µ÷ÓÃ
-//-----------Çå³ı°ó¶¨
-int Cleanup_sock_api()
-{
-	return WSACleanup();
+//********************************************ä»¥ä¸‹ç¬¬äºŒä¸ªå‡½æ•°å¿…é¡»åœ¨å¼€å¤´è°ƒç”¨********************************************
+//ä¸€ä¸ªè¿›ç¨‹è°ƒç”¨ä¸€æ¬¡å³å¯ï¼Œå¤šçº¿ç¨‹ä¸ç”¨é‡å¤è°ƒç”¨
+//-----------æ¸…é™¤ç»‘å®š
+int Cleanup_sock_api() {
+  return WSACleanup();
 }
-//-----------°ó¶¨socket¿â£¨³õÊ¼»¯socket£©
-int Startup_sock_api()
-{
-	return WSAStartup(MAKEWORD(2, 2), &wsadata);
+//-----------ç»‘å®šsocketåº“ï¼ˆåˆå§‹åŒ–socketï¼‰
+int Startup_sock_api() {
+  return WSAStartup(MAKEWORD(2, 2), &wsadata);
 }
-//*********************************************ÓÃÓÚ°ó¶¨ api µ½³ÌĞò**************************************************
+//*********************************************ç”¨äºç»‘å®š api
+//åˆ°ç¨‹åº**************************************************
 
-
-
-
-
-
-
-
-//get·şÎñ¶Ë¶ÔÏó
-void Get_object_server(Server* Server_Class)
-{
-	//·½·¨
-	Server_Class->Create_serversock = Create_serversock;
-	Server_Class->Close_serversock = Close_serversock;
-	Server_Class->Send_msg = Send_msg_server;
-	Server_Class->Get_error_server = Get_error_server;
-	Server_Class->Get_serversock = Get_serversock;
+// getæœåŠ¡ç«¯å¯¹è±¡
+void Get_object_server(Server* Server_Class) {
+  //æ–¹æ³•
+  Server_Class->Create_serversock = Create_serversock;
+  Server_Class->Close_serversock = Close_serversock;
+  Server_Class->Send_msg = Send_msg_server;
+  Server_Class->Get_error_server = Get_error_server;
+  Server_Class->Get_serversock = Get_serversock;
 }
-//get¿Í»§¶Ë¶ÔÏó
-void Get_object_client(Client* Client_Class)
-{
-	//·½·¨
-	Client_Class->Create_clientsock = Create_clientsock;
-	Client_Class->Close_clientsock = Close_clientsock;
-	Client_Class->Send_msg = Send_msg_client;
-	Client_Class->Get_error_client = Get_error_client;
-	Client_Class->Get_clientsock = Get_clientsock;
+// getå®¢æˆ·ç«¯å¯¹è±¡
+void Get_object_client(Client* Client_Class) {
+  //æ–¹æ³•
+  Client_Class->Create_clientsock = Create_clientsock;
+  Client_Class->Close_clientsock = Close_clientsock;
+  Client_Class->Send_msg = Send_msg_client;
+  Client_Class->Get_error_client = Get_error_client;
+  Client_Class->Get_clientsock = Get_clientsock;
 }
 
-
-
-
-//--------------Êı×éÉ¾³ı³ÉÔ±º¯Êı¶¨Òå£¨private£©
-void delete_member(struct socket_state* (*arr), int number, int size)
-{//1.Êı×éÊ×µØÖ·  2.ÓûÉ¾³ıÏÂ±ê  3.Êı×éÏÂ½ç
-	if (size == 0)//½öÊ£Ò»¸ö client Ê±ÆäÍË³ö£¬Êı×éÏÂ½çÎª 0 
-	{
-		free(*arr);//Ö±½ÓÊÍ·Å
-		*arr = NULL;//ÖÃNULL
-		return;//·µ»Ø
-	}
-	struct socket_state* temp = *arr;//ÁÙÊ±Ö¸Õë±£´æÔ­¿Õ¼ä
-	for (int i = number; i < size; i++)
-	{//¸´ÖÆ
-		(*arr)[i] = (*arr)[i + 1];
-	}
-	*arr = (struct socket_state*) realloc(*arr, size * sizeof(struct socket_state));//½Ø¶ÏÄ©Î²µÄÒ»¸ö³ÉÔ±
-	if (*arr == NULL)
-	{
-		free(temp);//·ÖÅäÊ§°Ü£¬ÊÍ·ÅÔ­¿Õ¼ä
-	}
+//--------------æ•°ç»„åˆ é™¤æˆå‘˜å‡½æ•°å®šä¹‰ï¼ˆprivateï¼‰
+void delete_member(struct socket_state*(*arr),
+                   int number,
+                   int size) {  // 1.æ•°ç»„é¦–åœ°å€  2.æ¬²åˆ é™¤ä¸‹æ ‡  3.æ•°ç»„ä¸‹ç•Œ
+  if (size == 0)  //ä»…å‰©ä¸€ä¸ª client æ—¶å…¶é€€å‡ºï¼Œæ•°ç»„ä¸‹ç•Œä¸º 0
+  {
+    free(*arr);   //ç›´æ¥é‡Šæ”¾
+    *arr = NULL;  //ç½®NULL
+    return;       //è¿”å›
+  }
+  struct socket_state* temp = *arr;      //ä¸´æ—¶æŒ‡é’ˆä¿å­˜åŸç©ºé—´
+  for (int i = number; i < size; i++) {  //å¤åˆ¶
+    (*arr)[i] = (*arr)[i + 1];
+  }
+  *arr = (struct socket_state*)realloc(
+      *arr, size * sizeof(struct socket_state));  //æˆªæ–­æœ«å°¾çš„ä¸€ä¸ªæˆå‘˜
+  if (*arr == NULL) {
+    free(temp);  //åˆ†é…å¤±è´¥ï¼Œé‡Šæ”¾åŸç©ºé—´
+  }
 }
 
-//----------------------------------------serverº¯Êı¶¨Òå
-int Create_serversock(Server* Server_Class)//Òì³£´íÎó»Øµ÷º¯Êı£¬¹©³ÌĞòÔ± debug
+//----------------------------------------serverå‡½æ•°å®šä¹‰
+int Create_serversock(Server* Server_Class)  //å¼‚å¸¸é”™è¯¯å›è°ƒå‡½æ•°ï¼Œä¾›ç¨‹åºå‘˜ debug
 
 {
-	if (Server_Class->s_client != NULL)
-	{//ÊÍ·Å client ÄÚ´æ
-		free(Server_Class->s_client); Server_Class->s_client = NULL;
-	}
+  if (Server_Class->s_client != NULL) {  //é‡Šæ”¾ client å†…å­˜
+    free(Server_Class->s_client);
+    Server_Class->s_client = NULL;
+  }
 
-	int arr_size = -1;//client Êı×éÏÂ½ç
-	Client_state sock_temp = { 0 };//ÁÙÊ± socket
-	fd_set source_REDfd, temp_REDfd;//Ö÷ÎÄ¼şÃèÊö·û¼¯ºÏ Óë ÁÙÊ±ÎÄ¼şÃèÊö·û¼¯ºÏ
-	int size_addr = sizeof(struct sockaddr);//ÓÃÓÚ accept() µÚËÄ¸ö²ÎÊı
-	char *buf = calloc(1, Server_Class->buf_lenth);//Êı¾İ½ÓÊÕ»º³åÇø
-	if (buf == NULL)return -1;
-	{//ÉèÖÃ server_addr
-		Server_Class->server.socket_addr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);//inet_addr()ÓÃÓÚ½« Ê®½øÖÆµã·Öip ×ª»»Îª ÍøÂç×Ö½ÚË³Ğò£¬Äæ×ªº¯ÊıÎª inet_ntoa()£¬
-		Server_Class->server.socket_addr.sin_family = AF_INET;//IPV4Ğ­Òé
-		Server_Class->server.socket_addr.sin_port = Server_Class->port == 0 ? htons(INADDR_ANY) : htons(Server_Class->port);//htons()£¨htonl£¨£©³¤ĞÍ£©½« int ×ª»»ÎªÖ÷»ú×Ö½ÚË³Ğò£¬Äæ×ªº¯ÊıÎª ntohs()£¨ntohl£¨£©³¤ĞÍ£©£¬
-	}
+  int arr_size = -1;             // client æ•°ç»„ä¸‹ç•Œ
+  Client_state sock_temp = {0};  //ä¸´æ—¶ socket
+  fd_set source_REDfd, temp_REDfd;  //ä¸»æ–‡ä»¶æè¿°ç¬¦é›†åˆ ä¸ ä¸´æ—¶æ–‡ä»¶æè¿°ç¬¦é›†åˆ
+  int size_addr = sizeof(struct sockaddr);  //ç”¨äº accept() ç¬¬å››ä¸ªå‚æ•°
+  char* buf = calloc(1, Server_Class->buf_lenth);  //æ•°æ®æ¥æ”¶ç¼“å†²åŒº
+  if (buf == NULL)
+    return -1;
+  {  //è®¾ç½® server_addr
+    Server_Class->server.socket_addr.sin_addr.S_un.S_addr =
+        htonl(INADDR_ANY);  // inet_addr()ç”¨äºå°† åè¿›åˆ¶ç‚¹åˆ†ip è½¬æ¢ä¸º
+                            // ç½‘ç»œå­—èŠ‚é¡ºåºï¼Œé€†è½¬å‡½æ•°ä¸º inet_ntoa()ï¼Œ
+    Server_Class->server.socket_addr.sin_family = AF_INET;  // IPV4åè®®
+    Server_Class->server.socket_addr.sin_port =
+        Server_Class->port == 0
+            ? htons(INADDR_ANY)
+            : htons(Server_Class->port);  // htons()ï¼ˆhtonlï¼ˆï¼‰é•¿å‹ï¼‰å°† int
+                                          // è½¬æ¢ä¸ºä¸»æœºå­—èŠ‚é¡ºåºï¼Œé€†è½¬å‡½æ•°ä¸º
+                                          // ntohs()ï¼ˆntohlï¼ˆï¼‰é•¿å‹ï¼‰ï¼Œ
+  }
 
-	//»ñÈ¡Ò»¸ö socket ÃèÊö·û
-	if (Server_Class->server.socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP), Server_Class->server.socket < 0)
-	{
-		Server_Class->error_sock = WSAGetLastError();
-		return -2;//socket ´´½¨Ê§°Ü
-	}
+  //è·å–ä¸€ä¸ª socket æè¿°ç¬¦
+  if (Server_Class->server.socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP),
+      Server_Class->server.socket < 0) {
+    Server_Class->error_sock = WSAGetLastError();
+    return -2;  // socket åˆ›å»ºå¤±è´¥
+  }
 
-	//°ó¶¨¶Ë¿Ú£¨¶ÔÓÚ server £¬ÎÒÃÇÓĞ±ØÒªÖªµÀÎÒÃÇµÄ¶Ë¿ÚÊÇ¶àÉÙ£¬ºÃÈÃ client ÖªµÀËüÒªÁ¬½Óµ½ÄÄÀï£©
-	if (bind(Server_Class->server.socket, (struct sockaddr*) & (Server_Class->server.socket_addr), sizeof(struct sockaddr)) < 0)
-	{
-		Server_Class->error_sock = WSAGetLastError();
-		return -3;//bind ¶Ë¿ÚÊ§°Ü
-	}
+  //ç»‘å®šç«¯å£ï¼ˆå¯¹äº server ï¼Œæˆ‘ä»¬æœ‰å¿…è¦çŸ¥é“æˆ‘ä»¬çš„ç«¯å£æ˜¯å¤šå°‘ï¼Œå¥½è®© client
+  //çŸ¥é“å®ƒè¦è¿æ¥åˆ°å“ªé‡Œï¼‰
+  if (bind(Server_Class->server.socket,
+           (struct sockaddr*)&(Server_Class->server.socket_addr),
+           sizeof(struct sockaddr)) < 0) {
+    Server_Class->error_sock = WSAGetLastError();
+    return -3;  // bind ç«¯å£å¤±è´¥
+  }
 
-	//¿ªÊ¼¼àÌı¶Ë¿ÚÏûÏ¢
-	if (listen(Server_Class->server.socket, 2) < 0)
-	{
-		Server_Class->error_sock = WSAGetLastError();													//FD_CLR(int fd, fd_set * set) //- ´Ó¼¯ºÏÖĞÒÆÈ¥fd
-		return -4;//listen Ê§°Ü															//FD_SET(int fd, fd_set * set)// - Ìí¼Ófdµ½¼¯ºÏ
-	}																					//FD_ISSET(int fd, fd_set * set)// - ²âÊÔfdÊÇ·ñÔÚ¼¯ºÏÖĞ
-	FD_ZERO(&temp_REDfd);																//FD_ZERO(fd_set * set) //- Çå³ıÒ»¸öÎÄ¼şÃèÊö·û¼¯ºÏ
-	FD_SET(Server_Class->server.socket, &temp_REDfd);
+  //å¼€å§‹ç›‘å¬ç«¯å£æ¶ˆæ¯
+  if (listen(Server_Class->server.socket, 2) < 0) {
+    Server_Class->error_sock =
+        WSAGetLastError();  // FD_CLR(int fd, fd_set * set) //- ä»é›†åˆä¸­ç§»å»fd
+    return -4;              // listen å¤±è´¥
+                // //FD_SET(int fd, fd_set * set)// - æ·»åŠ fdåˆ°é›†åˆ
+  }  // FD_ISSET(int fd, fd_set * set)// - æµ‹è¯•fdæ˜¯å¦åœ¨é›†åˆä¸­
+  FD_ZERO(&temp_REDfd);  // FD_ZERO(fd_set * set) //- æ¸…é™¤ä¸€ä¸ªæ–‡ä»¶æè¿°ç¬¦é›†åˆ
+  FD_SET(Server_Class->server.socket, &temp_REDfd);
 
-	FD_ZERO(&source_REDfd);
-	FD_SET(Server_Class->server.socket, &source_REDfd);
-	//Ñ­»·ÏûÏ¢£¬select·Ç×èÈû
-	while (1)
-	{
-		select(0, &temp_REDfd, NULL, NULL, &(Server_Class->timeout));// windows ÏÂµÚÒ»¸öµ¥Êı½öÓÃÓÚ±£³Ö¼æÈİĞÔ£¬¿ÉÒÔºöÂÔ
-		if (Server_Class->close_ser)//¼ì²âµ½¹Ø±Õ
-		{
-			Server_Class->close_ser = 0;//ÖØÖÃ
-			free(Server_Class->s_client); Server_Class->s_client = NULL;
-			free(buf);
-			return 1;//Íâ²¿¹Ø±Õ socket ºó½áÊø, 1 ÎªÕı³£½áÊø
-		}
+  FD_ZERO(&source_REDfd);
+  FD_SET(Server_Class->server.socket, &source_REDfd);
+  //å¾ªç¯æ¶ˆæ¯ï¼Œselectéé˜»å¡
+  while (1) {
+    select(0, &temp_REDfd, NULL, NULL,
+           &(Server_Class
+                 ->timeout));  // windows ä¸‹ç¬¬ä¸€ä¸ªå•æ•°ä»…ç”¨äºä¿æŒå…¼å®¹æ€§ï¼Œå¯ä»¥å¿½ç•¥
+    if (Server_Class->close_ser)  //æ£€æµ‹åˆ°å…³é—­
+    {
+      Server_Class->close_ser = 0;  //é‡ç½®
+      free(Server_Class->s_client);
+      Server_Class->s_client = NULL;
+      free(buf);
+      return 1;  //å¤–éƒ¨å…³é—­ socket åç»“æŸ, 1 ä¸ºæ­£å¸¸ç»“æŸ
+    }
 
-		//1. Ê×ÏÈÅĞ¶Ï server µÄ listen 
-		if (FD_ISSET(Server_Class->server.socket, &temp_REDfd))
-		{//client ÇëÇóÁ¬½Ó
-			sock_temp.socket = accept(Server_Class->server.socket, (struct sockaddr*) & (sock_temp.socket_addr), &size_addr);
-			//Óëµ÷ÓÃÕßĞ­Òé£¬»Øµ÷º¯Êı·µ»Ø -1 ÈÏÎª¶ªÆú´Ë client socket
-			if ((Server_Class->client_coming_callback == NULL ? 1 : (*Server_Class->client_coming_callback)(sock_temp.socket, inet_ntoa(sock_temp.socket_addr.sin_addr))) != -1)//µ÷ÓÃ»Øµ÷º¯Êı
-			{
-				//·ÖÅäĞÂÄÚ´æ
-				struct socket_state* temp = Server_Class->s_client;
-				Server_Class->s_client = (struct socket_state*)realloc(Server_Class->s_client, (++arr_size + 1) * sizeof(struct socket_state));//ar_size ÎªÊı×éÏÂ½ç£¬¹Ê×ÔÔöÏÂ½çºó + 1 ÎªÊı×éĞÂ³¤¶È
-				if (Server_Class->s_client == NULL)
-				{
-					free(temp);//·ÖÅäÊ§°Ü£¬ÊÍ·ÅÔ­¿Õ¼ä
-					return -5;//·µ»Ø -5
-				}
-				Server_Class->s_client[arr_size] = sock_temp;//µÃµ½ accept() µÄ client ĞÅÏ¢
-				FD_SET(sock_temp.socket, &source_REDfd);//Ìí¼Óµ½Ö÷ÃèÊö·û¼¯ºÏ
-			}
-			else
-			{//¶ªÆú´Ë socket
-				closesocket(sock_temp.socket);//¹Ø±Õ accept() µÄ socket
-			}
-		}
+    // 1. é¦–å…ˆåˆ¤æ–­ server çš„ listen
+    if (FD_ISSET(Server_Class->server.socket, &temp_REDfd)) {  // client
+                                                               // è¯·æ±‚è¿æ¥
+      sock_temp.socket =
+          accept(Server_Class->server.socket,
+                 (struct sockaddr*)&(sock_temp.socket_addr), &size_addr);
+      //ä¸è°ƒç”¨è€…åè®®ï¼Œå›è°ƒå‡½æ•°è¿”å› -1 è®¤ä¸ºä¸¢å¼ƒæ­¤ client socket
+      if ((Server_Class->client_coming_callback == NULL
+               ? 1
+               : (*Server_Class->client_coming_callback)(
+                     sock_temp.socket,
+                     inet_ntoa(sock_temp.socket_addr.sin_addr))) !=
+          -1)  //è°ƒç”¨å›è°ƒå‡½æ•°
+      {
+        //åˆ†é…æ–°å†…å­˜
+        struct socket_state* temp = Server_Class->s_client;
+        Server_Class->s_client = (struct socket_state*)realloc(
+            Server_Class->s_client,
+            (++arr_size + 1) *
+                sizeof(
+                    struct socket_state));  // ar_size ä¸ºæ•°ç»„ä¸‹ç•Œï¼Œæ•…è‡ªå¢ä¸‹ç•Œå
+                                            // + 1 ä¸ºæ•°ç»„æ–°é•¿åº¦
+        if (Server_Class->s_client == NULL) {
+          free(temp);  //åˆ†é…å¤±è´¥ï¼Œé‡Šæ”¾åŸç©ºé—´
+          return -5;   //è¿”å› -5
+        }
+        Server_Class->s_client[arr_size] =
+            sock_temp;  //å¾—åˆ° accept() çš„ client ä¿¡æ¯
+        FD_SET(sock_temp.socket, &source_REDfd);  //æ·»åŠ åˆ°ä¸»æè¿°ç¬¦é›†åˆ
+      } else {                                    //ä¸¢å¼ƒæ­¤ socket
+        closesocket(sock_temp.socket);            //å…³é—­ accept() çš„ socket
+      }
+    }
 
-		//2. ÔÙÅĞ¶Ï¸÷ client ÊÇ·ñ¿É¶Á 
-		for (int i = 0; i <= arr_size; i++)
-		{
-			if (FD_ISSET(Server_Class->s_client[i].socket, &temp_REDfd))
-			{
-
-				memset(buf, 0, 1024);//Çå¿Õ»º³åÇø
-				int temp = recv(Server_Class->s_client[i].socket, buf, 1023, 0);
-				//È¡µ½Êı¾İ
-				if (temp == 0)//·µ»Ø 0 £ºclient ¹Ø±ÕÁË socket
-				{//½âÊÍ£º ÔÚ select() µÃµ½µÄÎÄ¼şÃèÊö·ûÖĞ´æÔÚ´Ë client sock£¬È´Î´µÃµ½Êı¾İ£¬ËµÃ÷ client Ö÷¶¯¹Ø±ÕÁË socket£¬¶Ï¿ªÁËÁ¬½Ó
-					FD_CLR(Server_Class->s_client[i].socket, &source_REDfd);//ÔÚ¼¯ºÏÖĞÈ¥³ıÃèÊö·û
-					closesocket(Server_Class->s_client[i].socket);//¹Ø±ÕÀë¿ª client socket
-					if (Server_Class->client_leave_callback != NULL)
-					{
-						(*Server_Class->client_leave_callback)(Server_Class->s_client[i].socket, inet_ntoa(Server_Class->s_client[i].socket_addr.sin_addr), -4);//µ÷ÓÃ client_leave »Øµ÷º¯Êı
-					}
-					delete_member(&(Server_Class->s_client), i, arr_size);//É¾³ıÀë¿ª client µÄÄÚ´æ
-					arr_size--;//Êı×éÏÂ½ç - 1 
-					if (Server_Class->s_client == NULL && arr_size != -1)//´æÔÚÊı×é 0 ³ÉÔ±Çé¿ö,´ËÊ± arr_size == -1 £¬¶øĞÂÔö³ÉÔ±ĞèÒªµ÷ÓÃ realloc(p,size)  (pÖ¸ÏòNULLÊ± Ïàµ±ÓÚ malloc(size))
-					{//Ò²¾ÍÊÇËµ£¬µ± s_client Ö¸Ïò NULL Ê±²»Ò»¶¨ÊÇÄÚ´æ·ÖÅäÊ§°Ü£¬Ò²¿ÉÄÜÊÇÊı×é³ÉÔ±Îª 0 µÄµÈ´ı client ½øÈëµÄ×´Ì¬
-						//ÄÚ´æ·ÖÅäÊ§°Ü£¬delete_member()ÒÑÊÍ·Å¹ı¿Õ¼ä£¬Ö±½Ó·µ»Ø¼´¿É
-						return -6;//Õı³£ÍË³ö£¬·µ»Ø -6
-					}
-				}
-				else if (WSAGetLastError() == 10054) //´íÎóĞÅÏ¢·µ»Ø 10054 £ºclient Òì³£ÍË³ö£¬´ËÊ± recv ·µ»Ø -1
-				{//½âÊÍ£º 10054 ±íÊ¾ client Òì³£¶Ï¿ª£¬Ò»°ãÊÇÎ´¹Ø±Õ socket Ê± client Òì³£¹Ø±Õ
-					FD_CLR(Server_Class->s_client[i].socket, &source_REDfd);
-					closesocket(Server_Class->s_client[i].socket);//¹Ø±ÕÀë¿ª client socket
-					if (Server_Class->client_leave_callback != NULL)
-					{
-						(*Server_Class->client_leave_callback)(Server_Class->s_client[i].socket, inet_ntoa(Server_Class->s_client[i].socket_addr.sin_addr), -5);//µ÷ÓÃ client_leave »Øµ÷º¯Êı
-					}
-					delete_member(&(Server_Class->s_client), i, arr_size);//É¾³ıÀë¿ª client µÄÄÚ´æ
-					arr_size--;//Êı×éÏÂ½ç -1 
-					if (Server_Class->s_client == NULL && arr_size != -1)
-					{//ÄÚ´æ·ÖÅäÊ§°Ü£¬delete_member()ÒÑÊÍ·Å¹ı¿Õ¼ä£¬Ö±½Ó·µ»Ø¼´¿É
-						return -7;//Òì³£ÍË³ö£¬·µ»Ø -7
-					}
-				}
-				else if (WSAGetLastError() == 10053) //´íÎóĞÅÏ¢·µ»Ø 10053 £ºclient Òì³£ÍË³ö£¬´ËÊ± recv ·µ»Ø -1
-				{//½âÊÍ£º 10053 ±íÊ¾·şÎñ¶ËÖĞÖ¹ÁËÒÑ½¨Á¢µÄÁ¬½Ó£¬¿ÉÄÜÊÇÓÉÓÚÊı¾İ´«Êä³¬Ê±»òĞ­Òé´íÎóÔì³ÉµÄ¡£
-					FD_CLR(Server_Class->s_client[i].socket, &source_REDfd);
-					closesocket(Server_Class->s_client[i].socket);//¹Ø±ÕÀë¿ª client socket
-					if (Server_Class->client_leave_callback != NULL)
-					{
-						(*Server_Class->client_leave_callback)(Server_Class->s_client[i].socket, inet_ntoa(Server_Class->s_client[i].socket_addr.sin_addr), -5);//µ÷ÓÃ client_leave »Øµ÷º¯Êı
-					}
-					delete_member(&(Server_Class->s_client), i, arr_size);//É¾³ıÀë¿ª client µÄÄÚ´æ
-					arr_size--;//Êı×éÏÂ½ç -1 
-					if (Server_Class->s_client == NULL && arr_size != -1)
-					{//ÄÚ´æ·ÖÅäÊ§°Ü£¬delete_member()ÒÑÊÍ·Å¹ı¿Õ¼ä£¬Ö±½Ó·µ»Ø¼´¿É
-						return -7;//Òì³£ÍË³ö£¬·µ»Ø -7
-					}
-				}
-				else if (temp < 0)//ÆäËûÒì³££¬Ô­ÒòÎ´Öª
-				{
-					Server_Class->error_sock = WSAGetLastError();
-					if (Server_Class->error_callback != NULL)
-					{
-						(*Server_Class->error_callback)(Server_Class->s_client[i].socket, Server_Class->error_sock);//ÆäËûÒì³££¬µ÷ÓÃÒì³£»Øµ÷º¯Êı£¬¹©³ÌĞòÔ± debug
-					}
-				}
-				else
-				{
-					if (Server_Class->data_coming_callback != NULL)
-					{
-						(*Server_Class->data_coming_callback)(Server_Class->s_client[i].socket, inet_ntoa(Server_Class->s_client[i].socket_addr.sin_addr), buf);//µ÷ÓÃ data_coming »Øµ÷º¯Êı
-					}
-				}
-				//-1 Îª³ö´í£¬0 ÎªÕı³£¹Ø±Õ£¬>0 ±íÊ¾Õı³£È¡µ½Êı¾İ,      ×¢Òâ£¬³ö´í²¢²»ÒâÎ¶×ÅÁ¬½Ó¶Ï¿ª
-				//ÎªÊ²Ã´²»ÅĞ¶Ï recv() < 0 µÄÇé¿ö£¬×ª¶øÅĞ¶Ï´íÎóĞÅÏ¢µÄ·µ»ØÖµ£¬
-				//ÒòÎªrecv()·µ»Ø -1 ²»Ò»¶¨ÊÇ client ¶Ï¿ªÁ¬½Ó£¬¿ÉÄÜÊÇÆäËûÔ­Òò£¬¶ø´íÎóĞÅÏ¢ 10054 ´ú±í client Ò»¶¨Òì³£ÍË³ö
-			}
-		}
-		temp_REDfd = source_REDfd;
-	}
+    // 2. å†åˆ¤æ–­å„ client æ˜¯å¦å¯è¯»
+    for (int i = 0; i <= arr_size; i++) {
+      if (FD_ISSET(Server_Class->s_client[i].socket, &temp_REDfd)) {
+        memset(buf, 0, 1024);  //æ¸…ç©ºç¼“å†²åŒº
+        int temp = recv(Server_Class->s_client[i].socket, buf, 1023, 0);
+        //å–åˆ°æ•°æ®
+        if (temp == 0)  //è¿”å› 0 ï¼šclient å…³é—­äº† socket
+        {  //è§£é‡Šï¼š åœ¨ select() å¾—åˆ°çš„æ–‡ä»¶æè¿°ç¬¦ä¸­å­˜åœ¨æ­¤ client
+           // sockï¼Œå´æœªå¾—åˆ°æ•°æ®ï¼Œè¯´æ˜ client ä¸»åŠ¨å…³é—­äº† socketï¼Œæ–­å¼€äº†è¿æ¥
+          FD_CLR(Server_Class->s_client[i].socket,
+                 &source_REDfd);  //åœ¨é›†åˆä¸­å»é™¤æè¿°ç¬¦
+          closesocket(
+              Server_Class->s_client[i].socket);  //å…³é—­ç¦»å¼€ client socket
+          if (Server_Class->client_leave_callback != NULL) {
+            (*Server_Class->client_leave_callback)(
+                Server_Class->s_client[i].socket,
+                inet_ntoa(Server_Class->s_client[i].socket_addr.sin_addr),
+                -4);  //è°ƒç”¨ client_leave å›è°ƒå‡½æ•°
+          }
+          delete_member(&(Server_Class->s_client), i,
+                        arr_size);  //åˆ é™¤ç¦»å¼€ client çš„å†…å­˜
+          arr_size--;               //æ•°ç»„ä¸‹ç•Œ - 1
+          if (Server_Class->s_client == NULL &&
+              arr_size != -1)  //å­˜åœ¨æ•°ç»„ 0 æˆå‘˜æƒ…å†µ,æ­¤æ—¶ arr_size == -1
+                               //ï¼Œè€Œæ–°å¢æˆå‘˜éœ€è¦è°ƒç”¨ realloc(p,size)
+                               //(pæŒ‡å‘NULLæ—¶ ç›¸å½“äº malloc(size))
+          {  //ä¹Ÿå°±æ˜¯è¯´ï¼Œå½“ s_client æŒ‡å‘ NULL
+             //æ—¶ä¸ä¸€å®šæ˜¯å†…å­˜åˆ†é…å¤±è´¥ï¼Œä¹Ÿå¯èƒ½æ˜¯æ•°ç»„æˆå‘˜ä¸º 0 çš„ç­‰å¾… client
+             //è¿›å…¥çš„çŠ¶æ€
+            //å†…å­˜åˆ†é…å¤±è´¥ï¼Œdelete_member()å·²é‡Šæ”¾è¿‡ç©ºé—´ï¼Œç›´æ¥è¿”å›å³å¯
+            return -6;  //æ­£å¸¸é€€å‡ºï¼Œè¿”å› -6
+          }
+        } else if (WSAGetLastError() == 10054)  //é”™è¯¯ä¿¡æ¯è¿”å› 10054 ï¼šclient
+                                                //å¼‚å¸¸é€€å‡ºï¼Œæ­¤æ—¶ recv è¿”å› -1
+        {  //è§£é‡Šï¼š 10054 è¡¨ç¤º client å¼‚å¸¸æ–­å¼€ï¼Œä¸€èˆ¬æ˜¯æœªå…³é—­ socket æ—¶ client
+           //å¼‚å¸¸å…³é—­
+          FD_CLR(Server_Class->s_client[i].socket, &source_REDfd);
+          closesocket(
+              Server_Class->s_client[i].socket);  //å…³é—­ç¦»å¼€ client socket
+          if (Server_Class->client_leave_callback != NULL) {
+            (*Server_Class->client_leave_callback)(
+                Server_Class->s_client[i].socket,
+                inet_ntoa(Server_Class->s_client[i].socket_addr.sin_addr),
+                -5);  //è°ƒç”¨ client_leave å›è°ƒå‡½æ•°
+          }
+          delete_member(&(Server_Class->s_client), i,
+                        arr_size);  //åˆ é™¤ç¦»å¼€ client çš„å†…å­˜
+          arr_size--;               //æ•°ç»„ä¸‹ç•Œ -1
+          if (Server_Class->s_client == NULL &&
+              arr_size !=
+                  -1) {  //å†…å­˜åˆ†é…å¤±è´¥ï¼Œdelete_member()å·²é‡Šæ”¾è¿‡ç©ºé—´ï¼Œç›´æ¥è¿”å›å³å¯
+            return -7;  //å¼‚å¸¸é€€å‡ºï¼Œè¿”å› -7
+          }
+        } else if (WSAGetLastError() == 10053)  //é”™è¯¯ä¿¡æ¯è¿”å› 10053 ï¼šclient
+                                                //å¼‚å¸¸é€€å‡ºï¼Œæ­¤æ—¶ recv è¿”å› -1
+        {  //è§£é‡Šï¼š 10053
+           //è¡¨ç¤ºæœåŠ¡ç«¯ä¸­æ­¢äº†å·²å»ºç«‹çš„è¿æ¥ï¼Œå¯èƒ½æ˜¯ç”±äºæ•°æ®ä¼ è¾“è¶…æ—¶æˆ–åè®®é”™è¯¯é€ æˆçš„ã€‚
+          FD_CLR(Server_Class->s_client[i].socket, &source_REDfd);
+          closesocket(
+              Server_Class->s_client[i].socket);  //å…³é—­ç¦»å¼€ client socket
+          if (Server_Class->client_leave_callback != NULL) {
+            (*Server_Class->client_leave_callback)(
+                Server_Class->s_client[i].socket,
+                inet_ntoa(Server_Class->s_client[i].socket_addr.sin_addr),
+                -5);  //è°ƒç”¨ client_leave å›è°ƒå‡½æ•°
+          }
+          delete_member(&(Server_Class->s_client), i,
+                        arr_size);  //åˆ é™¤ç¦»å¼€ client çš„å†…å­˜
+          arr_size--;               //æ•°ç»„ä¸‹ç•Œ -1
+          if (Server_Class->s_client == NULL &&
+              arr_size !=
+                  -1) {  //å†…å­˜åˆ†é…å¤±è´¥ï¼Œdelete_member()å·²é‡Šæ”¾è¿‡ç©ºé—´ï¼Œç›´æ¥è¿”å›å³å¯
+            return -7;  //å¼‚å¸¸é€€å‡ºï¼Œè¿”å› -7
+          }
+        } else if (temp < 0)  //å…¶ä»–å¼‚å¸¸ï¼ŒåŸå› æœªçŸ¥
+        {
+          Server_Class->error_sock = WSAGetLastError();
+          if (Server_Class->error_callback != NULL) {
+            (*Server_Class->error_callback)(
+                Server_Class->s_client[i].socket,
+                Server_Class
+                    ->error_sock);  //å…¶ä»–å¼‚å¸¸ï¼Œè°ƒç”¨å¼‚å¸¸å›è°ƒå‡½æ•°ï¼Œä¾›ç¨‹åºå‘˜ debug
+          }
+        } else {
+          if (Server_Class->data_coming_callback != NULL) {
+            (*Server_Class->data_coming_callback)(
+                Server_Class->s_client[i].socket,
+                inet_ntoa(Server_Class->s_client[i].socket_addr.sin_addr),
+                buf);  //è°ƒç”¨ data_coming å›è°ƒå‡½æ•°
+          }
+        }
+        //-1 ä¸ºå‡ºé”™ï¼Œ0 ä¸ºæ­£å¸¸å…³é—­ï¼Œ>0 è¡¨ç¤ºæ­£å¸¸å–åˆ°æ•°æ®,
+        //æ³¨æ„ï¼Œå‡ºé”™å¹¶ä¸æ„å‘³ç€è¿æ¥æ–­å¼€ ä¸ºä»€ä¹ˆä¸åˆ¤æ–­ recv() < 0
+        //çš„æƒ…å†µï¼Œè½¬è€Œåˆ¤æ–­é”™è¯¯ä¿¡æ¯çš„è¿”å›å€¼ï¼Œ å› ä¸ºrecv()è¿”å› -1 ä¸ä¸€å®šæ˜¯ client
+        //æ–­å¼€è¿æ¥ï¼Œå¯èƒ½æ˜¯å…¶ä»–åŸå› ï¼Œè€Œé”™è¯¯ä¿¡æ¯ 10054 ä»£è¡¨ client ä¸€å®šå¼‚å¸¸é€€å‡º
+      }
+    }
+    temp_REDfd = source_REDfd;
+  }
 }
 
-//------------------------------------------------------------clientº¯Êı¶¨Òå
-int Create_clientsock(Client* Client_Class)
-{
-	fd_set source_REDfd, temp_REDfd;
-	char* buf = calloc(1, Client_Class->buf_lenth);//Êı¾İ½ÓÊÕ»º³åÇø
-	if (buf == NULL)return -5;
-	{//ÉèÖÃÄ¿±ê·şÎñ¶Ë addr
-		Client_Class->c_server.socket_addr.sin_addr.S_un.S_addr = inet_addr(Client_Class->ip);
-		Client_Class->c_server.socket_addr.sin_family = AF_INET;
-		Client_Class->c_server.socket_addr.sin_port = htons(Client_Class->port);
-	}
-	if (Client_Class->client.socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP), Client_Class->client.socket < 0)
-	{
-		Client_Class->error_sock = WSAGetLastError();
-		return -1;//socket Ê§°Ü
-	}
-	if (connect(Client_Class->client.socket, (struct sockaddr*) &(Client_Class->c_server.socket_addr), sizeof(struct sockaddr)) < 0)
-	{
-		Client_Class->error_sock = WSAGetLastError();
-		return -2;//connect Ê§°Ü
-	}
-	(*Client_Class->connect_succeed_callback)(Client_Class->client.socket);//µ÷ÓÃ connect ³É¹¦»Øµ÷º¯Êı
+//------------------------------------------------------------clientå‡½æ•°å®šä¹‰
+int Create_clientsock(Client* Client_Class) {
+  fd_set source_REDfd, temp_REDfd;
+  char* buf = calloc(1, Client_Class->buf_lenth);  //æ•°æ®æ¥æ”¶ç¼“å†²åŒº
+  if (buf == NULL)
+    return -5;
+  {  //è®¾ç½®ç›®æ ‡æœåŠ¡ç«¯ addr
+    Client_Class->c_server.socket_addr.sin_addr.S_un.S_addr =
+        inet_addr(Client_Class->ip);
+    Client_Class->c_server.socket_addr.sin_family = AF_INET;
+    Client_Class->c_server.socket_addr.sin_port = htons(Client_Class->port);
+  }
+  if (Client_Class->client.socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP),
+      Client_Class->client.socket < 0) {
+    Client_Class->error_sock = WSAGetLastError();
+    return -1;  // socket å¤±è´¥
+  }
+  if (connect(Client_Class->client.socket,
+              (struct sockaddr*)&(Client_Class->c_server.socket_addr),
+              sizeof(struct sockaddr)) < 0) {
+    Client_Class->error_sock = WSAGetLastError();
+    return -2;  // connect å¤±è´¥
+  }
+  (*Client_Class->connect_succeed_callback)(
+      Client_Class->client.socket);  //è°ƒç”¨ connect æˆåŠŸå›è°ƒå‡½æ•°
 
-	FD_ZERO(&temp_REDfd);
-	FD_SET(Client_Class->client.socket, &temp_REDfd);
+  FD_ZERO(&temp_REDfd);
+  FD_SET(Client_Class->client.socket, &temp_REDfd);
 
-	FD_ZERO(&source_REDfd);
-	FD_SET(Client_Class->client.socket, &source_REDfd);
+  FD_ZERO(&source_REDfd);
+  FD_SET(Client_Class->client.socket, &source_REDfd);
 
-	//¿ªÊ¼Ñ­»·ÏûÏ¢
-	while (1)
-	{
-		select(0, &temp_REDfd, NULL, NULL, &(Client_Class->timeout));
-		if (Client_Class->close_cli)
-		{
-			Client_Class->close_cli = 0;
-			free(buf);
-			return 1;//Õı³£½áÊø
-		}
-		if (FD_ISSET(Client_Class->client.socket, &temp_REDfd))//¿É¶Á
-		{
-			memset(buf, 0, 1024);//Çå¿Õ»º³åÇø
-			int temp = recv(Client_Class->client.socket, buf, 1023, 0);
-			Client_Class->error_sock = WSAGetLastError();
-			if (temp == 0)//-1 Îª³ö´í£¬0 ÎªÕı³£¹Ø±Õ£¬>0 ±íÊ¾Õı³£È¡µ½Êı¾İ,      ×¢Òâ£¬³ö´í²¢²»ÒâÎ¶×ÅÁ¬½Ó¶Ï¿ª
-			{//Àı£º·şÎñ¶Ë¹Ø±Õ client socket £¬·µ»Ø 0£¬        ·şÎñ¶Ë·ÇÕı³£¹Ø±Õ£¬·µ»Ø -1£¬        È¡µ½Õı³£Êı¾İ ·µ»Ø»º³åÇø×Ö·û´®³¤¶È
-				closesocket(Client_Class->client.socket);//¹Ø±Õ socket£¬×¼±¸·µ»Ø
-				if (Client_Class->server_leave_callback != NULL)
-				{
-					(*Client_Class->server_leave_callback)(Client_Class->client.socket, -3);//µ÷ÓÃ»Øµ÷º¯Êı£¬³ÌĞòÔ±´¦ÀíÊÂ¼ş
-				}
-				return -3;//·şÎñ¶ËÕı³£¹Ø±ÕÁ¬½Ó£¬·µ»Ø -3
-			}
-			else if (WSAGetLastError() == 10054)//10054´íÎó£¬server Òì³£ÍË³ö
-			{
-				closesocket(Client_Class->client.socket);//¹Ø±Õ socket£¬×¼±¸·µ»Ø
-				if (Client_Class->server_leave_callback != NULL)
-				{
-					(*Client_Class->server_leave_callback)(Client_Class->client.socket, -4);//µ÷ÓÃ»Øµ÷º¯Êı£¬³ÌĞòÔ±´¦ÀíÊÂ¼ş
-				}
-				return -4;//·şÎñ¶ËÒì³£ÍË³ö£¬·µ»Ø -4
-			}
-			else if (temp < 0)//Òì³££¬Ô­ÒòÎ´Öª
-			{
-				Client_Class->error_sock = WSAGetLastError();
-				if (Client_Class->error_callback != NULL)
-				{
-					(*Client_Class->error_callback)(Client_Class->error_sock);//Î´ÖªÔ­Òò£¬µ÷ÓÃ»Øµ÷º¯Êı¹©³ÌĞòÔ± debug
-				}
+  //å¼€å§‹å¾ªç¯æ¶ˆæ¯
+  while (1) {
+    select(0, &temp_REDfd, NULL, NULL, &(Client_Class->timeout));
+    if (Client_Class->close_cli) {
+      Client_Class->close_cli = 0;
+      free(buf);
+      return 1;  //æ­£å¸¸ç»“æŸ
+    }
+    if (FD_ISSET(Client_Class->client.socket, &temp_REDfd))  //å¯è¯»
+    {
+      memset(buf, 0, 1024);  //æ¸…ç©ºç¼“å†²åŒº
+      int temp = recv(Client_Class->client.socket, buf, 1023, 0);
+      Client_Class->error_sock = WSAGetLastError();
+      if (temp == 0)  //-1 ä¸ºå‡ºé”™ï¼Œ0 ä¸ºæ­£å¸¸å…³é—­ï¼Œ>0 è¡¨ç¤ºæ­£å¸¸å–åˆ°æ•°æ®,
+                      //æ³¨æ„ï¼Œå‡ºé”™å¹¶ä¸æ„å‘³ç€è¿æ¥æ–­å¼€
+      {  //ä¾‹ï¼šæœåŠ¡ç«¯å…³é—­ client socket ï¼Œè¿”å› 0ï¼Œ        æœåŠ¡ç«¯éæ­£å¸¸å…³é—­ï¼Œè¿”å›
+         //-1ï¼Œ        å–åˆ°æ­£å¸¸æ•°æ® è¿”å›ç¼“å†²åŒºå­—ç¬¦ä¸²é•¿åº¦
+        closesocket(Client_Class->client.socket);  //å…³é—­ socketï¼Œå‡†å¤‡è¿”å›
+        if (Client_Class->server_leave_callback != NULL) {
+          (*Client_Class->server_leave_callback)(
+              Client_Class->client.socket, -3);  //è°ƒç”¨å›è°ƒå‡½æ•°ï¼Œç¨‹åºå‘˜å¤„ç†äº‹ä»¶
+        }
+        return -3;  //æœåŠ¡ç«¯æ­£å¸¸å…³é—­è¿æ¥ï¼Œè¿”å› -3
+      } else if (WSAGetLastError() == 10054)  // 10054é”™è¯¯ï¼Œserver å¼‚å¸¸é€€å‡º
+      {
+        closesocket(Client_Class->client.socket);  //å…³é—­ socketï¼Œå‡†å¤‡è¿”å›
+        if (Client_Class->server_leave_callback != NULL) {
+          (*Client_Class->server_leave_callback)(
+              Client_Class->client.socket, -4);  //è°ƒç”¨å›è°ƒå‡½æ•°ï¼Œç¨‹åºå‘˜å¤„ç†äº‹ä»¶
+        }
+        return -4;          //æœåŠ¡ç«¯å¼‚å¸¸é€€å‡ºï¼Œè¿”å› -4
+      } else if (temp < 0)  //å¼‚å¸¸ï¼ŒåŸå› æœªçŸ¥
+      {
+        Client_Class->error_sock = WSAGetLastError();
+        if (Client_Class->error_callback != NULL) {
+          (*Client_Class->error_callback)(
+              Client_Class->error_sock);  //æœªçŸ¥åŸå› ï¼Œè°ƒç”¨å›è°ƒå‡½æ•°ä¾›ç¨‹åºå‘˜ debug
+        }
 
-			}
-			else
-			{
-				if (Client_Class->data_coming_callback != NULL)
-				{
-					(*Client_Class->data_coming_callback)(Client_Class->client.socket, buf);//Õı³£½ÓÊÕÊı¾İ£¬µ÷ÓÃ»Øµ÷º¯Êı
-				}
-			}
-
-		}
-		temp_REDfd = source_REDfd;
-	}
+      } else {
+        if (Client_Class->data_coming_callback != NULL) {
+          (*Client_Class->data_coming_callback)(
+              Client_Class->client.socket, buf);  //æ­£å¸¸æ¥æ”¶æ•°æ®ï¼Œè°ƒç”¨å›è°ƒå‡½æ•°
+        }
+      }
+    }
+    temp_REDfd = source_REDfd;
+  }
 }
 
-//------------------------------------------------------------------------------------------------------server·¢ËÍÊı¾İ
-int Send_msg_server(Server* Server_Class, SOCKET client_sock, char* msg, int lenth)//·şÎñ¶ËÌî½ÓÊÕ¶Ësocket£¬¿Í»§¶ËÌî·¢ËÍ¶Ësocket£¬ÒòÎª·şÎñ¶Ë¿ÉÄÜ½¨Á¢ÁË¶à¸öÁ¬½Ó£¬¶ø¿Í»§¶Ë½ö½¨Á¢ÁËÒ»¸öÁ¬½Ó
-{//±£Ö¤»º³åÇøÓĞ½áÎ² \0 ,»òÌá¹©¾«×¼µÄlenth
-	if (send(client_sock, msg, lenth, 0) < 0)//³ö´í
-	{
-		Server_Class->error_sock = WSAGetLastError();
-		return -1;
-	}
-	return 0;
+//------------------------------------------------------------------------------------------------------serverå‘é€æ•°æ®
+int Send_msg_server(
+    Server* Server_Class,
+    SOCKET client_sock,
+    char* msg,
+    int lenth)  //æœåŠ¡ç«¯å¡«æ¥æ”¶ç«¯socketï¼Œå®¢æˆ·ç«¯å¡«å‘é€ç«¯socketï¼Œå› ä¸ºæœåŠ¡ç«¯å¯èƒ½å»ºç«‹äº†å¤šä¸ªè¿æ¥ï¼Œè€Œå®¢æˆ·ç«¯ä»…å»ºç«‹äº†ä¸€ä¸ªè¿æ¥
+{               //ä¿è¯ç¼“å†²åŒºæœ‰ç»“å°¾ \0 ,æˆ–æä¾›ç²¾å‡†çš„lenth
+  if (send(client_sock, msg, lenth, 0) < 0)  //å‡ºé”™
+  {
+    Server_Class->error_sock = WSAGetLastError();
+    return -1;
+  }
+  return 0;
 }
 
-//------------------------------------------------------------------------------------------------------client·¢ËÍÊı¾İ
-int Send_msg_client(Client* Client_Class, char* msg, int lenth)//·şÎñ¶ËÌî½ÓÊÕ¶Ësocket£¬¿Í»§¶ËÌî·¢ËÍ¶Ësocket£¬ÒòÎª·şÎñ¶Ë¿ÉÄÜ½¨Á¢ÁË¶à¸öÁ¬½Ó£¬¶ø¿Í»§¶Ë½ö½¨Á¢ÁËÒ»¸öÁ¬½Ó
-{//±£Ö¤»º³åÇøÓĞ½áÎ² \0 ,»òÌá¹©¾«×¼µÄlenth
-	if (send(Client_Class->client.socket, msg, lenth, 0) < 0)//³ö´í
-	{
-		Client_Class->error_sock = WSAGetLastError();
-		return -1;
-	}
-	return 0;
+//------------------------------------------------------------------------------------------------------clientå‘é€æ•°æ®
+int Send_msg_client(
+    Client* Client_Class,
+    char* msg,
+    int lenth)  //æœåŠ¡ç«¯å¡«æ¥æ”¶ç«¯socketï¼Œå®¢æˆ·ç«¯å¡«å‘é€ç«¯socketï¼Œå› ä¸ºæœåŠ¡ç«¯å¯èƒ½å»ºç«‹äº†å¤šä¸ªè¿æ¥ï¼Œè€Œå®¢æˆ·ç«¯ä»…å»ºç«‹äº†ä¸€ä¸ªè¿æ¥
+{               //ä¿è¯ç¼“å†²åŒºæœ‰ç»“å°¾ \0 ,æˆ–æä¾›ç²¾å‡†çš„lenth
+  if (send(Client_Class->client.socket, msg, lenth, 0) < 0)  //å‡ºé”™
+  {
+    Client_Class->error_sock = WSAGetLastError();
+    return -1;
+  }
+  return 0;
 }
 
-//--------------------------------------------------------------------------------close server
-int Close_serversock(Server* Server_Class) //¹Ø±Õ server ¼°Æä accept() µ½µÄ client socket
-{//³É¹¦¹Ø±Õ·µ»Ø 0 ,´íÎóÔò·µ»Ø SOCKET_ERROR
-	Server_Class->close_ser = 1;//±êÖ¾ÖÃ 1 £¬Áî server ½áÊø
-	return closesocket(Server_Class->server.socket);
+//--------------------------------------------------------------------------------close
+// server
+int Close_serversock(
+    Server* Server_Class)  //å…³é—­ server åŠå…¶ accept() åˆ°çš„ client socket
+{                          //æˆåŠŸå…³é—­è¿”å› 0 ,é”™è¯¯åˆ™è¿”å› SOCKET_ERROR
+  Server_Class->close_ser = 1;  //æ ‡å¿—ç½® 1 ï¼Œä»¤ server ç»“æŸ
+  return closesocket(Server_Class->server.socket);
 }
 
-//--------------------------------------------------------------------------------close client
-int Close_clientsock(Client* Client_Class) //¹Ø±Õ client socket
-{//³É¹¦¹Ø±Õ·µ»Ø 0 ,´íÎóÔò·µ»Ø SOCKET_ERROR
-	Client_Class->close_cli = 1;//±êÖ¾ÖÃ 1 £¬Áî client ½áÊø
-	return closesocket(Client_Class->client.socket);
+//--------------------------------------------------------------------------------close
+// client
+int Close_clientsock(Client* Client_Class)  //å…³é—­ client socket
+{  //æˆåŠŸå…³é—­è¿”å› 0 ,é”™è¯¯åˆ™è¿”å› SOCKET_ERROR
+  Client_Class->close_cli = 1;  //æ ‡å¿—ç½® 1 ï¼Œä»¤ client ç»“æŸ
+  return closesocket(Client_Class->client.socket);
 }
 
-
-//--------------------------------»ñÈ¡server_socket
-SOCKET Get_serversock(Server* Server_Class)
-{
-	return Server_Class->server.socket;
+//--------------------------------è·å–server_socket
+SOCKET Get_serversock(Server* Server_Class) {
+  return Server_Class->server.socket;
 }
 
-//--------------------------------»ñÈ¡client_socket
-SOCKET Get_clientsock(Client* Client_Class)
-{
-	return Client_Class->client.socket;
+//--------------------------------è·å–client_socket
+SOCKET Get_clientsock(Client* Client_Class) {
+  return Client_Class->client.socket;
 }
 
-
-
-//-----------·şÎñ¶Ë»ñÈ¡ÉÏÒ»´ÎµÄ´íÎóĞÅÏ¢
-int Get_error_server(Server* Server_Class)
-{
-	return Server_Class->error_sock;
+//-----------æœåŠ¡ç«¯è·å–ä¸Šä¸€æ¬¡çš„é”™è¯¯ä¿¡æ¯
+int Get_error_server(Server* Server_Class) {
+  return Server_Class->error_sock;
 }
 
-//-----------¿Í»§¶Ë»ñÈ¡ÉÏÒ»´ÎµÄ´íÎóĞÅÏ¢
-int Get_error_client(Client* Client_Class)
-{
-	return Client_Class->error_sock;
+//-----------å®¢æˆ·ç«¯è·å–ä¸Šä¸€æ¬¡çš„é”™è¯¯ä¿¡æ¯
+int Get_error_client(Client* Client_Class) {
+  return Client_Class->error_sock;
 }
-

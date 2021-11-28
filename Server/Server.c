@@ -1,188 +1,178 @@
 
-//socket ½Ó¿Ú
-#include"Gao_socket.h"//winsock2.h °üº¬ÁË windows.h
-#pragma comment(lib,"Gao_socket.lib")
+// socket æ¥å£
+#include "Gao_socket.h"  //winsock2.h åŒ…å«äº† windows.h
+#pragma comment(lib, "Gao_socket.lib")
 
-//×Ö·û´®´¦Àí
-#include<stdio.h>
+//å­—ç¬¦ä¸²å¤„ç†
+#include <stdio.h>
 
+//è·å–æ—¶é—´
+#include <time.h>
 
-//»ñÈ¡Ê±¼ä
-#include<time.h>
+//æœåŠ¡ç«¯ä¿¡æ¯
+#define PORT 50055  //æœåŠ¡ç«¯ç›‘å¬ç«¯å£
 
-//·şÎñ¶ËĞÅÏ¢
-#define PORT 50055//·şÎñ¶Ë¼àÌı¶Ë¿Ú
-
-//¼ÓÈë/É¾³ı ¿Í»§Ê±µÄ·µ»ØÖµ
+//åŠ å…¥/åˆ é™¤ å®¢æˆ·æ—¶çš„è¿”å›å€¼
 #define SUCCESS 1
 #define FAIL -1
 
+//-----------------------------------------------å£°æ˜-----------------------------------------------
 
-//-----------------------------------------------ÉùÃ÷-----------------------------------------------
-
-//*************ÉùÃ÷±äÁ¿*******************
+//*************å£°æ˜å˜é‡*******************
 SOCKET* client;
 int arr_Lowsub = -1;
 
-//*************ÉùÃ÷º¯Êı*******************
-//·şÎñ¶Ë»Øµ÷º¯Êı
+//*************å£°æ˜å‡½æ•°*******************
+//æœåŠ¡ç«¯å›è°ƒå‡½æ•°
 int client_coming_callback(SOCKET client_sock, char* ip);
 void client_leave_callback(SOCKET client_sock, char* ip, int state);
 void data_coming_callback(SOCKET client_sock, char* ip, char* data);
 void error_callback(SOCKET client_sock, int error);
 
-//ÆäËû
-int sock_add(SOCKET sock_data, SOCKET* (*socket), int* Lowsub);
-int sock_del(SOCKET* (*arr), int sub, int* Lowsub);
+//å…¶ä»–
+int sock_add(SOCKET sock_data, SOCKET*(*socket), int* Lowsub);
+int sock_del(SOCKET*(*arr), int sub, int* Lowsub);
 
-
-
-
-//-----------------------------------------------Ö÷º¯Êı-----------------------------------------------
-int main()
-{
-	startup_sock_api();
-	struct timeval timv = { 2,0 };
-	//socket ÔÚÖ÷Ïß³ÌÖĞµ÷ÓÃ
-	create_serversock(PORT, timv, client_coming_callback, client_leave_callback, data_coming_callback, error_callback);
+//-----------------------------------------------ä¸»å‡½æ•°-----------------------------------------------
+int main() {
+  startup_sock_api();
+  struct timeval timv = {2, 0};
+  // socket åœ¨ä¸»çº¿ç¨‹ä¸­è°ƒç”¨
+  create_serversock(PORT, timv, client_coming_callback, client_leave_callback,
+                    data_coming_callback, error_callback);
 }
 
-
-
-
-//*************socketËÄ¸ö»Øµ÷*******************
-int client_coming_callback(SOCKET client_sock, char* ip)//client ÇëÇóÁ¬½Ó »Øµ÷º¯Êı
+//*************socketå››ä¸ªå›è°ƒ*******************
+int client_coming_callback(SOCKET client_sock,
+                           char* ip)  // client è¯·æ±‚è¿æ¥ å›è°ƒå‡½æ•°
 {
-	while (sock_add(client_sock, &client, &arr_Lowsub) == FAIL)
-	{
-		if (MessageBox(NULL, L"ClientÄÚ´æ·ÖÅäÊ§°Ü£¡", L"´íÎó", MB_RETRYCANCEL | MB_ICONEXCLAMATION | MB_ICONWARNING) != IDRETRY)
-			exit(-1);
-	}
+  while (sock_add(client_sock, &client, &arr_Lowsub) == FAIL) {
+    if (MessageBox(NULL, L"Clientå†…å­˜åˆ†é…å¤±è´¥ï¼", L"é”™è¯¯",
+                   MB_RETRYCANCEL | MB_ICONEXCLAMATION | MB_ICONWARNING) !=
+        IDRETRY)
+      exit(-1);
+  }
 
-	//·Ö·¢ÔÚÏßÈËÊıÏûÏ¢¸ø¿Í»§¶Ë
-	char buf[10] = { 0 };
-	sprintf(buf, " %d", arr_Lowsub + 1);//Ç°×º¿Õ¸ñ´ú±í·¢ËÍµÄÊı¾İÎªÔÚÏßÈËÊı
-	for (int i = 0; i <= arr_Lowsub; i++)
-	{
-		send_msg(client[i], buf, strlen(buf));
-	}
-	printf("client ÇëÇóÁ¬½Ó »Øµ÷º¯Êı:%s\nsocket:%d\narrsize:%d\n\n", ip, client_sock, arr_Lowsub);
-	return ACCEPT_CLIENT;
+  //åˆ†å‘åœ¨çº¿äººæ•°æ¶ˆæ¯ç»™å®¢æˆ·ç«¯
+  char buf[10] = {0};
+  sprintf(buf, " %d", arr_Lowsub + 1);  //å‰ç¼€ç©ºæ ¼ä»£è¡¨å‘é€çš„æ•°æ®ä¸ºåœ¨çº¿äººæ•°
+  for (int i = 0; i <= arr_Lowsub; i++) {
+    send_msg(client[i], buf, strlen(buf));
+  }
+  printf("client è¯·æ±‚è¿æ¥ å›è°ƒå‡½æ•°:%s\nsocket:%d\narrsize:%d\n\n", ip,
+         client_sock, arr_Lowsub);
+  return ACCEPT_CLIENT;
 }
 
-
-void client_leave_callback(SOCKET client_sock, char* ip, int state)//client Àë¿ª »Øµ÷º¯Êı
+void client_leave_callback(SOCKET client_sock,
+                           char* ip,
+                           int state)  // client ç¦»å¼€ å›è°ƒå‡½æ•°
 {
-	int i = 0;
-	for (; i <= arr_Lowsub; i++)
-	{
-		if (client[i] == client_sock)break;
-	}
-	while (sock_del(&client, i, &arr_Lowsub) == FAIL)
-	{
-		if (MessageBox(NULL, L"ClientÄÚ´æ·ÖÅäÊ§°Ü£¡", L"´íÎó", MB_RETRYCANCEL | MB_ICONEXCLAMATION | MB_ICONWARNING) != IDRETRY)
-			exit(-1);
-	}
+  int i = 0;
+  for (; i <= arr_Lowsub; i++) {
+    if (client[i] == client_sock)
+      break;
+  }
+  while (sock_del(&client, i, &arr_Lowsub) == FAIL) {
+    if (MessageBox(NULL, L"Clientå†…å­˜åˆ†é…å¤±è´¥ï¼", L"é”™è¯¯",
+                   MB_RETRYCANCEL | MB_ICONEXCLAMATION | MB_ICONWARNING) !=
+        IDRETRY)
+      exit(-1);
+  }
 
-	//·Ö·¢ÔÚÏßÈËÊıÏûÏ¢¸ø¿Í»§¶Ë
-	char buf[10] = { 0 };
-	sprintf(buf, " %d", arr_Lowsub + 1);//Ç°×º¿Õ¸ñ´ú±í·¢ËÍµÄÊı¾İÎªÔÚÏßÈËÊı
-	for (int i = 0; i <= arr_Lowsub; i++)
-	{
-		send_msg(client[i], buf, strlen(buf));
-	}
-	printf("client Àë¿ª »Øµ÷º¯Êı:%s\nsocket:%d\nstate:%d\narrsize:%d\n\n", ip, client_sock, state, arr_Lowsub);
+  //åˆ†å‘åœ¨çº¿äººæ•°æ¶ˆæ¯ç»™å®¢æˆ·ç«¯
+  char buf[10] = {0};
+  sprintf(buf, " %d", arr_Lowsub + 1);  //å‰ç¼€ç©ºæ ¼ä»£è¡¨å‘é€çš„æ•°æ®ä¸ºåœ¨çº¿äººæ•°
+  for (int i = 0; i <= arr_Lowsub; i++) {
+    send_msg(client[i], buf, strlen(buf));
+  }
+  printf("client ç¦»å¼€ å›è°ƒå‡½æ•°:%s\nsocket:%d\nstate:%d\narrsize:%d\n\n", ip,
+         client_sock, state, arr_Lowsub);
 }
 
-
-void data_coming_callback(SOCKET client_sock, char* ip, char* data)//client Êı¾İµ½´ï »Øµ÷º¯Êı
+void data_coming_callback(SOCKET client_sock,
+                          char* ip,
+                          char* data)  // client æ•°æ®åˆ°è¾¾ å›è°ƒå‡½æ•°
 {
-	printf("client Êı¾İµ½´ï »Øµ÷º¯Êı:%s\nsocket:%d\ndata:%s\narrsize:%d\n\n", ip, client_sock, data, arr_Lowsub);
-	//¿Í»§¶Ë±£Ö¤ÎÒÃÇ½ÓÊÕµÄÊı¾İÖÁ¶à²»³¬¹ı1024k
-	//Æ´½ÓÏûÏ¢
-	char str[1100] = { 0 };//ÓÉÓÚĞèÒªÆ´½ÓÊ±¼äÎÄ±¾£¬¹Ê»º³åÇøÉÔ´óÒ»Ğ©£¬·ÀÖ¹strcatÒç³ö
-	time_t tm = time(0);
-	  //1.Æ´½ÓÊ±¼ä
-	strcat(str, ctime(&tm));
-	str[strlen(str) - 1] = 0;//È¥µôctimeÄ©Î²µÄ\0
-	strcat(str, "\r\n");
+  printf("client æ•°æ®åˆ°è¾¾ å›è°ƒå‡½æ•°:%s\nsocket:%d\ndata:%s\narrsize:%d\n\n", ip,
+         client_sock, data, arr_Lowsub);
+  //å®¢æˆ·ç«¯ä¿è¯æˆ‘ä»¬æ¥æ”¶çš„æ•°æ®è‡³å¤šä¸è¶…è¿‡1024k
+  //æ‹¼æ¥æ¶ˆæ¯
+  char str[1100] = {
+      0};  //ç”±äºéœ€è¦æ‹¼æ¥æ—¶é—´æ–‡æœ¬ï¼Œæ•…ç¼“å†²åŒºç¨å¤§ä¸€äº›ï¼Œé˜²æ­¢strcatæº¢å‡º
+  time_t tm = time(0);
+  // 1.æ‹¼æ¥æ—¶é—´
+  strcat(str, ctime(&tm));
+  str[strlen(str) - 1] = 0;  //å»æ‰ctimeæœ«å°¾çš„\0
+  strcat(str, "\r\n");
 
-	  //2.Æ´½Ó¿Í»§¶ËÊı¾İ
-	strcat(str, data);
-													//·şÎñ¶Ë·µ»ØµÄ×îÖÕÊı¾İ°üÀ¨
-	  //3.Æ´½Ó»»ĞĞ									//1.Ê±¼ä + »»ĞĞ + £¨ĞÕÃû + »»ĞĞ + Êı¾İ£© + »»ĞĞ + »»ĞĞ
-	str[1019] = 0;									//¿Í»§¶Ë¸ºÔğ ¿Í»§¶ËÊı¾İ =£¨ĞÕÃû + »»ĞĞ + Êı¾İ£©
-	strcat(str, "\r\n\r\n");                        //·şÎñ¶Ë¸ºÔğ Ê±¼ä + »»ĞĞ + Æ´½Ó¿Í»§¶ËÊı¾İ + »»ĞĞ + »»ĞĞ
-	str[1023] = 0;//Ä©Î²ÖÃ0£¬±£Ö¤·¢ËÍµÄÊı¾İ²»´óÓÚ 1kb
-	
-	//·Ö·¢ÁÄÌìÏûÏ¢¸ø¿Í»§¶Ë
-	for (int i = 0; i <= arr_Lowsub; i++)
-	{
-		send_msg(client[i],str,strlen(str));
-	}
+  // 2.æ‹¼æ¥å®¢æˆ·ç«¯æ•°æ®
+  strcat(str, data);
+  //æœåŠ¡ç«¯è¿”å›çš„æœ€ç»ˆæ•°æ®åŒ…æ‹¬
+  // 3.æ‹¼æ¥æ¢è¡Œ									//1.æ—¶é—´ + æ¢è¡Œ + ï¼ˆå§“å +
+  // æ¢è¡Œ
+  // + æ•°æ®ï¼‰ + æ¢è¡Œ + æ¢è¡Œ
+  str[1019] = 0;  //å®¢æˆ·ç«¯è´Ÿè´£ å®¢æˆ·ç«¯æ•°æ® =ï¼ˆå§“å + æ¢è¡Œ + æ•°æ®ï¼‰
+  strcat(str,
+         "\r\n\r\n");  //æœåŠ¡ç«¯è´Ÿè´£ æ—¶é—´ + æ¢è¡Œ + æ‹¼æ¥å®¢æˆ·ç«¯æ•°æ® + æ¢è¡Œ + æ¢è¡Œ
+  str[1023] = 0;  //æœ«å°¾ç½®0ï¼Œä¿è¯å‘é€çš„æ•°æ®ä¸å¤§äº 1kb
+
+  //åˆ†å‘èŠå¤©æ¶ˆæ¯ç»™å®¢æˆ·ç«¯
+  for (int i = 0; i <= arr_Lowsub; i++) {
+    send_msg(client[i], str, strlen(str));
+  }
 }
 
-
-void error_callback(SOCKET client_sock, int error)//Òì³£´íÎó»Øµ÷º¯Êı£¬¹©³ÌĞòÔ± debug
+void error_callback(SOCKET client_sock,
+                    int error)  //å¼‚å¸¸é”™è¯¯å›è°ƒå‡½æ•°ï¼Œä¾›ç¨‹åºå‘˜ debug
 {
-	//µ÷ÊÔ¶ÏµãÊ±µÄ¼«ÉÙÊıÇé¿öÏÂ»á³öÏÖ10038´íÎó
-	//½Ó¿ÚÀïÃ»Ğ´¶Ô10038´íÎóÂëµÄ´¦Àí£¬´ËÎÊÌâµÄ½âÊÍÊÇ·şÎñ¶ËÖ÷¶¯¹Ø±ÕÄ³socketºóÈÔÊÔÍ¼Ê¹ÓÃ¸Ãsocket£¬ÔİÊ±Ã»½â¾öË¼Â·
-	printf("Òì³£´íÎó»Øµ÷º¯Êı\nsocket:%d\nerror:%d\narrsize:%d\n\n", client_sock, error, arr_Lowsub);
-	char buf[100] = { 0 };
-	sprintf(buf,"error:%d\n",error);
-	OutputDebugString(buf);
-	printf("error:%d\n",error);
+  //è°ƒè¯•æ–­ç‚¹æ—¶çš„æå°‘æ•°æƒ…å†µä¸‹ä¼šå‡ºç°10038é”™è¯¯
+  //æ¥å£é‡Œæ²¡å†™å¯¹10038é”™è¯¯ç çš„å¤„ç†ï¼Œæ­¤é—®é¢˜çš„è§£é‡Šæ˜¯æœåŠ¡ç«¯ä¸»åŠ¨å…³é—­æŸsocketåä»è¯•å›¾ä½¿ç”¨è¯¥socketï¼Œæš‚æ—¶æ²¡è§£å†³æ€è·¯
+  printf("å¼‚å¸¸é”™è¯¯å›è°ƒå‡½æ•°\nsocket:%d\nerror:%d\narrsize:%d\n\n", client_sock,
+         error, arr_Lowsub);
+  char buf[100] = {0};
+  sprintf(buf, "error:%d\n", error);
+  OutputDebugString(buf);
+  printf("error:%d\n", error);
 }
 
-
-
-
-//*************Êı×é²Ù×÷º¯Êı*******************
-//Ôö¼Ó³ÉÔ±
-int sock_add(SOCKET sock_data,SOCKET* (*socket), int* Lowsub)
-{
-	SOCKET* temp = *socket;
-	*socket = (SOCKET*)realloc(*socket, (*Lowsub + 2) * sizeof(unsigned int));
-	if (*socket == NULL)
-	{
-		*socket = temp;
-		return FAIL;//Ê§°Ü
-	}
-	else
-	{
-
-		(*socket)[++(*Lowsub)] = sock_data;
-		return SUCCESS;//³É¹¦
-	}
-
+//*************æ•°ç»„æ“ä½œå‡½æ•°*******************
+//å¢åŠ æˆå‘˜
+int sock_add(SOCKET sock_data, SOCKET*(*socket), int* Lowsub) {
+  SOCKET* temp = *socket;
+  *socket = (SOCKET*)realloc(*socket, (*Lowsub + 2) * sizeof(unsigned int));
+  if (*socket == NULL) {
+    *socket = temp;
+    return FAIL;  //å¤±è´¥
+  } else {
+    (*socket)[++(*Lowsub)] = sock_data;
+    return SUCCESS;  //æˆåŠŸ
+  }
 }
 
-//É¾³ı³ÉÔ±
-int sock_del(SOCKET* (*arr), int sub, int* Lowsub)
-{//1.Êı×éÊ×µØÖ·  2.ÓûÉ¾³ıÏÂ±ê  3.Êı×éÏÂ½ç
-	if (*Lowsub == 0)//½öÊ£Ò»¸ö³ÉÔ±Ê±ÆäÍË³ö£¬Êı×éÏÂ½çÎª 0 
-	{
-		free(*arr);//Ö±½ÓÊÍ·Å
-		*arr = NULL;//ÖÃNULL
-		(*Lowsub)--;
-		return SUCCESS;//·µ»Ø 1,³É¹¦
-	}
+//åˆ é™¤æˆå‘˜
+int sock_del(SOCKET*(*arr),
+             int sub,
+             int* Lowsub) {  // 1.æ•°ç»„é¦–åœ°å€  2.æ¬²åˆ é™¤ä¸‹æ ‡  3.æ•°ç»„ä¸‹ç•Œ
+  if (*Lowsub == 0)  //ä»…å‰©ä¸€ä¸ªæˆå‘˜æ—¶å…¶é€€å‡ºï¼Œæ•°ç»„ä¸‹ç•Œä¸º 0
+  {
+    free(*arr);   //ç›´æ¥é‡Šæ”¾
+    *arr = NULL;  //ç½®NULL
+    (*Lowsub)--;
+    return SUCCESS;  //è¿”å› 1,æˆåŠŸ
+  }
 
-	SOCKET* temp = *arr;//ÁÙÊ±Ö¸Õë±£´æÔ­¿Õ¼äµØÖ·
-	for (int i = sub; i < *Lowsub; i++)
-	{//¸´ÖÆ
-		(*arr)[i] = (*arr)[i + 1];
-	}
+  SOCKET* temp = *arr;                   //ä¸´æ—¶æŒ‡é’ˆä¿å­˜åŸç©ºé—´åœ°å€
+  for (int i = sub; i < *Lowsub; i++) {  //å¤åˆ¶
+    (*arr)[i] = (*arr)[i + 1];
+  }
 
-	*arr = (SOCKET*) realloc(*arr, *Lowsub * sizeof(SOCKET));//½Ø¶ÏÄ©Î²µÄÒ»¸ö³ÉÔ±
-	if (*arr == NULL)
-	{
-		*arr = temp;//·ÖÅäÊ§°Ü£¬±£´æÔ­Ö¸Õë
-		return FAIL;//·µ»Ø -1,Ê§°Ü
-	}
-	else
-	{
-		(*Lowsub)--;
-		return SUCCESS;//·µ»Ø 1,³É¹¦
-	}
+  *arr = (SOCKET*)realloc(*arr, *Lowsub * sizeof(SOCKET));  //æˆªæ–­æœ«å°¾çš„ä¸€ä¸ªæˆå‘˜
+  if (*arr == NULL) {
+    *arr = temp;  //åˆ†é…å¤±è´¥ï¼Œä¿å­˜åŸæŒ‡é’ˆ
+    return FAIL;  //è¿”å› -1,å¤±è´¥
+  } else {
+    (*Lowsub)--;
+    return SUCCESS;  //è¿”å› 1,æˆåŠŸ
+  }
 }

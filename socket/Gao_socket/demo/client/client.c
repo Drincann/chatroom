@@ -1,29 +1,34 @@
-#include"Gao_socket.h"
-#pragma comment(lib,"Gao_socket.lib")
-#include<stdio.h>
-void server_leave_callback(int error) {//·şÎñ¶Ë¶Ï¿ªÁ¬½Ó
-	printf("\nerver_leave:%d", error);
+#include "Gao_socket.h"
+#pragma comment(lib, "Gao_socket.lib")
+#include <stdio.h>
+void server_leave_callback(int error) {  //æœåŠ¡ç«¯æ–­å¼€è¿æ¥
+  printf("\nerver_leave:%d", error);
 }
-void data_coming_callback(SOCKET client_sock, char* data) {//Êı¾İµ½´ï
-	char buf[100] = { 0 };
-	printf("\ndata_coming:%s", data);
-	scanf("%s", buf);//ÊäÈëÊı¾İ
-	printf("\nsend:%d", send_msg(get_client(), buf, strlen(buf)));//·¢ËÍ
+void data_coming_callback(SOCKET client_sock, char* data) {  //æ•°æ®åˆ°è¾¾
+  char buf[100] = {0};
+  printf("\ndata_coming:%s", data);
+  scanf("%s", buf);                                               //è¾“å…¥æ•°æ®
+  printf("\nsend:%d", send_msg(get_client(), buf, strlen(buf)));  //å‘é€
 }
-void connect_succeed_callback(SOCKET client_sock) {//connect ³É¹¦ »Øµ÷º¯Êı
-	printf("\nconnect_succeed");
+void connect_succeed_callback(SOCKET client_sock) {  // connect æˆåŠŸ å›è°ƒå‡½æ•°
+  printf("\nconnect_succeed");
 }
-void error_callback(SOCKET client_sock, int error) {//³öÏÖÒì³£
-	printf("\nerror:%d", error);
-
+void error_callback(SOCKET client_sock, int error) {  //å‡ºç°å¼‚å¸¸
+  printf("\nerror:%d", error);
 }
 void main() {
-	struct timeval tim = { 1,0 };
-	char ip[20];
-	int port;
-	printf("Ip£º"); gets(&ip);//ÊäÈë server ipµØÖ·
-	printf("Port£º"); scanf("%d", &port);//ÊäÈë server ¼àÌı¶Ë¿Ú
-	printf("\nstart:%d", startup_sock_api());//startup_sock_api() ±ØĞëÊ×ÏÈµ÷ÓÃ
-	printf("\nreturn:%d", create_clientsock(port, &ip, tim, server_leave_callback, data_coming_callback, connect_succeed_callback, error_callback));
-	getchar(); getchar();
+  struct timeval tim = {1, 0};
+  char ip[20];
+  int port;
+  printf("Ipï¼š");
+  gets(&ip);  //è¾“å…¥ server ipåœ°å€
+  printf("Portï¼š");
+  scanf("%d", &port);                        //è¾“å…¥ server ç›‘å¬ç«¯å£
+  printf("\nstart:%d", startup_sock_api());  // startup_sock_api() å¿…é¡»é¦–å…ˆè°ƒç”¨
+  printf("\nreturn:%d",
+         create_clientsock(port, &ip, tim, server_leave_callback,
+                           data_coming_callback, connect_succeed_callback,
+                           error_callback));
+  getchar();
+  getchar();
 }
