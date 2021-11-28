@@ -1,46 +1,42 @@
-#include "Gao_socket.h"
-#pragma comment(lib, "Gao_socket.lib")
-#include <stdio.h>
+#include"Gao_socket.h"
+#pragma comment(lib,"Gao_socket.lib")
+#include<stdio.h>
 
-int client_coming_callback(SOCKET client_sock, char* ip) {  //å®¢æˆ·è¿›å…¥
-  char buf[100] = {0};
-  printf("\nclient_coming:\nip:%s\nsocket:%d", ip, client_sock);  //æ˜¾ç¤ºå®¢æˆ·ä¿¡æ¯
-  sprintf(buf, "IP:%s\n", ip);
-  printf("\nsend:%d", send_msg(client_sock, buf, strlen(buf)));  //å‘é€å…¶ä¿¡æ¯
-  return ACCEPT_CLIENT;                                          //æ¥å—å®¢æˆ·
+
+int client_coming_callback(SOCKET client_sock, char* ip) {//¿Í»§½øÈë
+	char buf[100] = {0};
+	printf("\nclient_coming:\nip:%s\nsocket:%d", ip,client_sock);//ÏÔÊ¾¿Í»§ĞÅÏ¢
+	sprintf(buf,"IP:%s\n",ip);
+	printf("\nsend:%d", send_msg(client_sock, buf, strlen(buf)));//·¢ËÍÆäĞÅÏ¢
+	return ACCEPT_CLIENT;//½ÓÊÜ¿Í»§
 }
 
-void client_leave_callback(SOCKET client_sock,
-                           char* ip,
-                           int state) {  //å®¢æˆ·ç¦»å¼€
-  if (state == CLIENT_NOR_CLOSE) {
-    printf("\nclient_normal_leave:\nip:%s\nsocket:%d", ip, client_sock);
-  } else {
-    printf("\nclient_unnormal_leave:\nip:%s\nsocket:%d", ip, client_sock);
-  }
+void client_leave_callback(SOCKET client_sock, char* ip, int state) {//¿Í»§Àë¿ª
+	if (state == CLIENT_NOR_CLOSE)
+	{
+		printf("\nclient_normal_leave:\nip:%s\nsocket:%d", ip, client_sock);
+	}
+	else
+	{
+		printf("\nclient_unnormal_leave:\nip:%s\nsocket:%d", ip, client_sock);
+	}
+
 }
 
-void data_coming_callback(SOCKET client_sock,
-                          char* ip,
-                          char* data) {  //æ•°æ®åˆ°è¾¾
-  printf("\ndata_coming:\nip:%s\ndata:%s\nsocket:%d", ip, data,
-         client_sock);  //è¾“å‡ºä¿¡æ¯
+void data_coming_callback(SOCKET client_sock, char* ip, char* data) {//Êı¾İµ½´ï
+	printf("\ndata_coming:\nip:%s\ndata:%s\nsocket:%d", ip, data, client_sock);//Êä³öĞÅÏ¢
 }
 
-void error_callback(SOCKET client_sock, int error) {  //å‡ºç°å¼‚å¸¸
-  printf("\nerror:%d", error);
+void error_callback(SOCKET client_sock, int error) {//³öÏÖÒì³£
+	printf("\nerror:%d", error);
 }
 
 void main() {
-  struct timeval timv = {1, 0};  //æœåŠ¡å™¨è½®è¯¢å„å®¢æˆ·ç«¯è¶…æ—¶æ—¶é—´
-  unsigned int port;
-  printf("Monitored portï¼š");
-  scanf("%d", &port);                        //è¾“å…¥æ¬²ç›‘å¬çš„ç«¯å£
-  printf("\nstart:%d", startup_sock_api());  // startup_sock_api() å¿…é¡»é¦–å…ˆè°ƒç”¨
-  printf("\nreturn:%d",
-         create_serversock(port, timv, client_coming_callback,
-                           client_leave_callback, data_coming_callback,
-                           error_callback));
-  getchar();
-  getchar();
+
+	struct timeval timv = { 1,0 };//·şÎñÆ÷ÂÖÑ¯¸÷¿Í»§¶Ë³¬Ê±Ê±¼ä
+	unsigned int port;
+	printf("Monitored port£º"); scanf("%d",&port);//ÊäÈëÓû¼àÌıµÄ¶Ë¿Ú
+	printf("\nstart:%d", startup_sock_api());//startup_sock_api() ±ØĞëÊ×ÏÈµ÷ÓÃ
+	printf("\nreturn:%d", create_serversock(port, timv, client_coming_callback, client_leave_callback, data_coming_callback, error_callback));
+	getchar(); getchar();
 }

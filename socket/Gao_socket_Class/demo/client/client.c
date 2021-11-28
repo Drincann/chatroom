@@ -1,50 +1,47 @@
-#include "Gao_socket_Class.h"
-#pragma comment(lib, "Gao_socket_Class.lib")
-#include <stdio.h>
-Client client = {0};
-void server_leave_callback(int error) {  //æœåŠ¡ç«¯æ–­å¼€è¿æ¥
-  printf("\nerver_leave:%d", error);
+#include"Gao_socket_Class.h"
+#pragma comment(lib,"Gao_socket_Class.lib")
+#include<stdio.h>
+Client client = { 0 };
+void server_leave_callback(int error) {//·şÎñ¶Ë¶Ï¿ªÁ¬½Ó
+	printf("\nerver_leave:%d", error);
 }
-void data_coming_callback(SOCKET client_sock, char* data) {  //æ•°æ®åˆ°è¾¾
-  char buf[100] = {0};
-  printf("\ndata_coming:%s", data);
-  printf("\nè¾“å…¥æ•°æ®ï¼š");
-  scanf("%s", buf);  //è¾“å…¥æ•°æ®
-  printf("\nsend:%d",
-         (*client.method_Send_msg)(client, buf, strlen(buf)));  //å‘é€
+void data_coming_callback(SOCKET client_sock, char* data) {//Êı¾İµ½´ï
+	char buf[100] = { 0 };
+	printf("\ndata_coming:%s", data);
+	printf("\nÊäÈëÊı¾İ£º");
+	scanf("%s", buf);//ÊäÈëÊı¾İ
+	printf("\nsend:%d", (*client.method_Send_msg)(client, buf, strlen(buf)));//·¢ËÍ
 }
-void connect_succeed_callback(SOCKET client_sock) {  // connect æˆåŠŸ å›è°ƒå‡½æ•°
-  printf("\nconnect_succeed");
+void connect_succeed_callback(SOCKET client_sock) {//connect ³É¹¦ »Øµ÷º¯Êı
+	printf("\nconnect_succeed");
 }
-void error_callback(SOCKET client_sock, int error) {  //å‡ºç°å¼‚å¸¸
-  printf("\nerror:%d", error);
+void error_callback(SOCKET client_sock, int error) {//³öÏÖÒì³£
+	printf("\nerror:%d", error);
+
 }
 void main() {
-  struct timeval tim = {1, 0};
+	struct timeval tim = { 1,0 };
 
-  Get_object_client(&client);  //ç½®å¯¹è±¡æ–¹æ³•
 
-  {  //ç½®å¯¹è±¡æˆå‘˜å±æ€§
-    client.member_buf_lenth = 1024;
-    client.member_timeout = tim;
-    client.member_callback_connect_succeed = connect_succeed_callback;
-    client.member_callback_data_coming = data_coming_callback;
-    client.member_callback_error = error_callback;
-    client.member_callback_server_leave = server_leave_callback;
-    printf("Ipï¼š");
-    scanf("%s", client.member_ip);  //è¾“å…¥ server ipåœ°å€
-    printf("Portï¼š");
-    scanf("%hu", &client.member_port);  //è¾“å…¥ server ç›‘å¬ç«¯å£
-  }
+	Get_object_client(&client);//ÖÃ¶ÔÏó·½·¨
 
-  if (Startup_sock_api() == -1)
-    return;  // startup_sock_api() å¿…é¡»é¦–å…ˆè°ƒç”¨(åŒä¸€è¿›ç¨‹è°ƒç”¨ä¸€æ¬¡å³å¯)
+	{//ÖÃ¶ÔÏó³ÉÔ±ÊôĞÔ
+		client.member_buf_lenth = 1024;
+		client.member_timeout = tim;
+		client.member_callback_connect_succeed = connect_succeed_callback;
+		client.member_callback_data_coming = data_coming_callback;
+		client.member_callback_error = error_callback;
+		client.member_callback_server_leave = server_leave_callback;
+		printf("Ip£º"); scanf("%s",client.member_ip);//ÊäÈë server ipµØÖ·
+		printf("Port£º"); scanf("%hu", &client.member_port);//ÊäÈë server ¼àÌı¶Ë¿Ú
+	}
 
-  printf("\nstartup succeed");
+	if (Startup_sock_api() == -1)return;//startup_sock_api() ±ØĞëÊ×ÏÈµ÷ÓÃ(Í¬Ò»½ø³Ìµ÷ÓÃÒ»´Î¼´¿É)
 
-  printf("\nreturn:%d", client.method_Create_clientsock(&client));
-  printf("\nerror:%d", client.method_Get_error_client(client));
+	printf("\nstartup succeed");
 
-  getchar();
-  getchar();
+	printf("\nreturn:%d", client.method_Create_clientsock(&client));
+	printf("\nerror:%d", client.method_Get_error_client(client));
+
+	getchar(); getchar();
 }
